@@ -56,10 +56,14 @@
 
   uniform float uTime; //time in sec
   out vec3 vColor;
-  // out float opacity; // From HW1
+  out float opacity; // From HW1
+
+  // Transformation Matrices
+  uniform vec3 u_translation, u_rotation, u_scaling, u_shearing, u_reflecting;
 
   void main() {
     vec3 p = aPosition;
+    p += u_translation;
     
     /* From HW1:
     if(gl_VertexID == 0) {
@@ -74,9 +78,9 @@
     }
     */
     
-    gl_Position = vec4(p, 10.0);
+    gl_Position = vec4(p, 10.0); // The larger second value is, the smaller the image becomes
     
-    // opacity = sin(uTime * 5.0) * 0.5 + 0.5; // From HW1
+    opacity = sin(uTime * 5.0) * 0.5 + 0.5; // From HW1
     vColor = aColor;
   }
   </script>
@@ -133,6 +137,70 @@
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
+    // --- HW2: Transformations ---
+    var twoDTransform = {
+      translation: function translation(tx, ty) {
+        return [
+          1,  0,  0,
+           0,  1,  0,
+          tx, ty, 1
+        ];
+      },
+
+      rotation: function rotation(angle) {
+        var cosine = Math.cos(angle);
+        var sine = Math.sin(angle);
+        return [
+          cosine, -sine, 0,
+          sine,  cosine, 0,
+          0,  0,  1
+        ];
+      },
+
+      scaling: function scaling(sx, sy) {
+        return [
+          sx, 0,  0,
+          0, sy,  0,
+          0,  0,  1
+        ];
+      },
+
+      shearing: function shearing(shx, shy) {
+        return [
+          1, shx, 0,
+          shy, 1, 0,
+          0,  0,  1
+        ];
+      },
+
+      reflection: function reflection(axis) {
+        if (axis == "x") {
+          return [
+            1,  0, 0,
+            0, -1, 0,
+            0,  0, 0
+          ];
+        } else if (axis == "y") {
+          return [
+            -1, 0, 0,
+             0, 1, 0,
+             0, 0, 0
+          ];
+        } else if (axis == "y=x") {
+          return [
+            0, 1, 0,
+            1, 0, 0,
+            0, 0, 0
+          ];
+        } else { // Reflect across y = -x
+          return [
+             0, -1, 0,
+            -1,  0, 0,
+             0,  0, 0
+          ];
+        }
+      }
+    }
 
     const vsEditor = document.getElementById("vsEditor");
     const fsEditor = document.getElementById("fsEditor");
