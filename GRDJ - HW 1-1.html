@@ -56,10 +56,12 @@
 
   uniform float uTime; //time in sec
   out vec3 vColor;
-  out float opacity;
+  // out float opacity; // From HW1
 
   void main() {
     vec3 p = aPosition;
+    
+    /* From HW1:
     if(gl_VertexID == 0) {
       p.x += 0.75 * cos(uTime);
     }
@@ -70,9 +72,11 @@
       p.x += 0.75 * sin(uTime-0.5);
       p.y += 0.25 * cos(uTime);
     }
-    gl_Position = vec4(p, 4.0);
+    */
     
-    opacity = sin(uTime * 5.0) * 0.5 + 0.5;
+    gl_Position = vec4(p, 10.0);
+    
+    // opacity = sin(uTime * 5.0) * 0.5 + 0.5; // From HW1
     vColor = aColor;
   }
   </script>
@@ -82,12 +86,13 @@
   <script id="fragment-shader" type="x-shader/x-fragment">#version 300 es
   precision mediump float;
   in vec3 vColor;
-  in float opacity;
+  // in float opacity; // From HW1
 
   out vec4 fragColor;
 
   void main() {
-    fragColor = vec4(vColor, opacity);
+    fragColor = vec4(vColor, 1);
+    // fragColor = vec4(vColor, opacity); // From HW1
   }
   </script>
 
@@ -168,6 +173,10 @@
 
     let startTime = Date.now();
     function render() {
+      var primitiveType = gl.TRIANGLES;
+      var offset = 0;
+      var count = 6;
+
       //clear the canvas
       gl.clearColor(0, 0, 0, 1);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -189,7 +198,8 @@
       gl.uniform1f(timeLoc, deltaTime/1000.0);
 
       // Draw content
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      // gl.drawArrays(gl.TRIANGLES, 0, 3); // From HW1
+      gl.drawArrays(primitiveType, offset, count);
     }
 
     // Initialize when page loads
