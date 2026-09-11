@@ -59,11 +59,11 @@
   out float opacity; // From HW1
 
   // Transformation Matrices
-  uniform vec3 u_translation, u_rotation, u_scaling, u_shearing, u_reflecting;
+  uniform vec3 uTranslation, uRotation, uScaling, uShearing, uReflecting;
 
   void main() {
     vec3 p = aPosition;
-    p += u_translation;
+    p += uTranslation;
     
     /* From HW1:
     if(gl_VertexID == 0) {
@@ -78,7 +78,7 @@
     }
     */
     
-    gl_Position = vec4(p, 10.0); // The larger second value is, the smaller the image becomes
+    gl_Position = vec4(p, 10.0); // The larger second value is, the smaller the image becomes;   From HW1
     
     opacity = sin(uTime * 5.0) * 0.5 + 0.5; // From HW1
     vColor = aColor;
@@ -138,16 +138,16 @@
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
     // --- HW2: Transformations ---
-    var twoDTransform = {
-      translation: function translation(tx, ty) {
+    var twoDHomogeneousTransform = {
+      translation: function (tx, ty) {
         return [
-          1,  0,  0,
-           0,  1,  0,
-          tx, ty, 1
+          1, 0, tx,
+          0, 1, ty,
+          0, 0,  1
         ];
       },
 
-      rotation: function rotation(angle) {
+      rotation: function (angle) {
         var cosine = Math.cos(angle);
         var sine = Math.sin(angle);
         return [
@@ -157,7 +157,7 @@
         ];
       },
 
-      scaling: function scaling(sx, sy) {
+      scaling: function (sx, sy) {
         return [
           sx, 0,  0,
           0, sy,  0,
@@ -165,7 +165,7 @@
         ];
       },
 
-      shearing: function shearing(shx, shy) {
+      shearing: function (shx, shy) {
         return [
           1, shx, 0,
           shy, 1, 0,
@@ -173,7 +173,7 @@
         ];
       },
 
-      reflection: function reflection(axis) {
+      reflection: function (axis) {
         if (axis == "x") {
           return [
             1,  0, 0,
@@ -208,7 +208,8 @@
     fsEditor.value = document.getElementById("fragment-shader").textContent;
 
     let program, posLoc, colorLoc, timeLoc;
-    let posBuffer, colorBuffer;
+    let posBuffer, colorBuffer, matrixLoc;
+    let transLoc, scaleLoc, rotLoc, reflectLoc, shearLoc;
 
     // --- Buffers ---
     function initBuffers() {
@@ -230,6 +231,12 @@
         posLoc = gl.getAttribLocation(program, "aPosition");
         colorLoc = gl.getAttribLocation(program, "aColor");
         timeLoc = gl.getUniformLocation(program, "uTime");
+        matrixLoc = gl.getUniformLocation(program, "uMatrix");
+        transLoc = gl.getUniformLocation(program, "uTranslation");
+        scaleLoc = gl.getUniformLocation(program, "uScaling");
+        rotLoc = gl.getUniformLocation(program, "uRotation");
+        reflectLoc = gl.getUniformLocation(program, "uReflecting");
+        shearLoc = gl.getUniformLocation(program, "uShearing");
       } catch (e) { console.error(e); }
     }
 
@@ -264,6 +271,13 @@
       let deltaTime = Date.now() - startTime;
       //set time in seconds
       gl.uniform1f(timeLoc, deltaTime/1000.0);
+
+      //transformation setup
+      gl.uniform3f(transLoc, 0.0, 0.0, 0.0);
+      // gl.uniform3f(scaleLoc, 0.0, 0.0, 0.0);
+      // gl.uniform3f(rotLoc, 0.0, 0.0, 0.0);
+      // gl.uniform3f(reflectLoc, 0.0, 0.0, 0.0);
+      // gl.uniform3f(shearLoc, 0.0, 0.0, 0.0);
 
       // Draw content
       // gl.drawArrays(gl.TRIANGLES, 0, 3); // From HW1
