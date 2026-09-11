@@ -59,9 +59,9 @@
   out float opacity; // From HW1
 
   // Transformation Vertices
-  uniform vec3 uTranslation, uRotation, uScaling, uShearing, uReflecting;
+  uniform vec3 uTranslation, uScaling, uShearing, uReflecting;
   // Matrix
-  uniform mat3 uMatrix;
+  uniform mat3 uMatrix, uRotation;
 
   void main() {
     vec3 p = aPosition;
@@ -315,7 +315,7 @@
       const roz = 0.0;
       gl.uniform3f(rotLoc, rox, roy, roz);
       
-      const rex = 0.0;
+      const rex = "x";
       const rey = 0.0;
       const rez = 0.0;
       gl.uniform3f(reflectLoc, rex, rey, rez);
@@ -327,9 +327,9 @@
       
     const transMat = twoDHomogeneousTransform.translation(tx, ty);
     const rotMat = twoDHomogeneousTransform.rotation(rox);
-    const scaleMat = twoDHomogeneousTransform.scaling(tx, ty);
-    const refMat = twoDHomogeneousTransform.reflection(rox);
-    const shearMat = twoDHomogeneousTransform.shearing(tx, ty);
+    const scaleMat = twoDHomogeneousTransform.scaling(sx, sy);
+    const refMat = twoDHomogeneousTransform.reflection(rex);
+    const shearMat = twoDHomogeneousTransform.shearing(shx, shy);
     // Combined matrix transformations
     const combinedMatrix = matrixMult(transMat, rotMat); // Translate and Rotate
     gl.uniformMatrix3fv(matrixLoc, false, combinedMatrix);
