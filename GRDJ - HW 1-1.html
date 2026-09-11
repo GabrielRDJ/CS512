@@ -58,11 +58,14 @@
   out vec3 vColor;
   out float opacity; // From HW1
 
-  // Transformation Matrices
+  // Transformation Vertices
   uniform vec3 uTranslation, uRotation, uScaling, uShearing, uReflecting;
+  // Matrix
+  uniform mat3 uMatrix;
 
   void main() {
     vec3 p = aPosition;
+    p = uMatrix * p;
     p += uTranslation;
     
     /* From HW1:
@@ -79,6 +82,7 @@
     */
     
     gl_Position = vec4(p, 10.0); // The larger second value is, the smaller the image becomes;   From HW1
+    // gl_Position = vec4(uMatrix * p, 10.0);
     
     opacity = sin(uTime * 5.0) * 0.5 + 0.5; // From HW1
     vColor = aColor;
@@ -178,25 +182,25 @@
           return [
             1,  0, 0,
             0, -1, 0,
-            0,  0, 0
+            0,  0, 1
           ];
         } else if (axis == "y") {
           return [
             -1, 0, 0,
              0, 1, 0,
-             0, 0, 0
+             0, 0, 1
           ];
         } else if (axis == "y=x") {
           return [
             0, 1, 0,
             1, 0, 0,
-            0, 0, 0
+            0, 0, 1
           ];
         } else { // Reflect across y = -x
           return [
              0, -1, 0,
             -1,  0, 0,
-             0,  0, 0
+             0,  0, 1
           ];
         }
       }
@@ -242,15 +246,30 @@
 
     initShaderProgram();
 
+    function matrixMult(a, b) {
+      let result = [];
+      for (let row = 0; row < 3; row++) {
+        for (let col = 0; col < 3; col++) {
+          let sum = 0;
+          for (let i = 0; i < 3; i++) {
+            sum += a[row * 3 + i] * b[i * 3 + col];
+          }
+        result[row * 3 + col] = sum;
+        }
+      }
+      return result;
+    }
+
+
     //hot compile when any input in the playground text area
     vsEditor.onkeyup = initShaderProgram;
     fsEditor.onkeyup = initShaderProgram;
 
     let startTime = Date.now();
     function render() {
-      var primitiveType = gl.TRIANGLES;
-      var offset = 0;
-      var count = 6;
+      let primitiveType = gl.TRIANGLES;
+      let offset = 0;
+      let count = 6;
 
       //clear the canvas
       gl.clearColor(0, 0, 0, 1);
@@ -272,12 +291,40 @@
       //set time in seconds
       gl.uniform1f(timeLoc, deltaTime/1000.0);
 
-      //transformation setup
-      gl.uniform3f(transLoc, 0.0, 0.0, 0.0);
-      // gl.uniform3f(scaleLoc, 0.0, 0.0, 0.0);
-      // gl.uniform3f(rotLoc, 0.0, 0.0, 0.0);
-      // gl.uniform3f(reflectLoc, 0.0, 0.0, 0.0);
-      // gl.uniform3f(shearLoc, 0.0, 0.0, 0.0);
+      // Transformation setup
+      const tx = Math.sin(deltaTime * 0.001) * 8.0; // oscilate on x
+      const ty = 0.0;
+      const tz = 0.0;
+      gl.uniform3f(transLoc, tx, ty, tz);
+      
+      const sx = 0.0;
+      const sy = 0.0;
+      const sz = 0.0;
+      gl.uniform3f(scaleLoc, sx, sy, sz);
+      
+      const rox = deltaTime * 0.001;
+      const roy = 0.0;
+      const roz = 0.0;
+      gl.uniform3f(rotLoc, rox, roy, roz);
+      
+      const rex = 0.0;
+      const rey = 0.0;
+      const rez = 0.0;
+      gl.uniform3f(reflectLoc, rex, rey, rez);
+      
+      const shx = 0.0;
+      const shy = 0.0;
+      const shz = 0.0;
+      gl.uniform3f(shearLoc, shx, shy, shz);
+      
+    const transMat = twoDHomogeneousTransform.translation(tx, ty);
+    const rotMat = twoDHomogeneousTransform.rotation(rox);
+    const scaleMat = twoDHomogeneousTransform.scaling(tx, ty);
+    const refMat = twoDHomogeneousTransform.reflection(rox);
+    const shearMat = twoDHomogeneousTransform.shearing(tx, ty);
+    // Combined matrix transformations
+    const combinedMatrix = matrixMult(transMat, rotMat); // Translate and Rotate
+    gl.uniformMatrix3fv(matrixLoc, false, combinedMatrix);
 
       // Draw content
       // gl.drawArrays(gl.TRIANGLES, 0, 3); // From HW1
