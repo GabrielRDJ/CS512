@@ -11,7 +11,29 @@ const positions = new Float32Array([
 ]);
 
 const colors = new Float32Array([
-  1,0,0,  0,1,0,  0,0,1, 1,1,0, 1,0,1, 0,1,1, 1,1,0, 1,0,1
+  1,0,0,
+  0,1,0,
+  0,0,1,
+  1,1,0,
+  1,0,1,
+  0,1,1,
+  1,1,0,
+  1,0,1
+]);
+
+const colorsSphere = new Float32Array([
+  1,0,0,
+  0,1,0,
+  0,0,1,
+  1,1,0,
+  1,0,1,
+  0,1,1
+]);
+
+const colorsTorus = new Float32Array([
+  0.5,0,0.5,
+  0,1,0,
+  0.5,0.5,1
 ]);
 
 
@@ -36,13 +58,17 @@ function createSphere(radius = 1, segments = 20, rings = 20) {
     const colors = [];
     const indices = [];
 
-    for (let lat = 0; lat <= rings; ++lat) {
-        const theta = lat * Math.PI / rings;
+    for (let latitude = 0; latitude <= rings; ++latitude) {
+        const theta = latitude * Math.PI / rings;
         const sinTheta = Math.sin(theta);
         const cosTheta = Math.cos(theta);
 
-        for (let lon = 0; lon <= segments; ++lon) {
-            const phi = lon * 2 * Math.PI / segments;
+        // Map latitude to an index in colorsSphere
+        const colorIndex = Math.floor((latitude / rings) * (colorsSphere.length / 3 - 0.1));
+        const colorOffset = colorIndex * 3;
+
+        for (let longitude = 0; longitude <= segments; ++longitude) {
+            const phi = longitude * 2 * Math.PI / segments;
             const sinPhi = Math.sin(phi);
             const cosPhi = Math.cos(phi);
 
@@ -51,14 +77,17 @@ function createSphere(radius = 1, segments = 20, rings = 20) {
             const z = radius * sinTheta * sinPhi;
 
             positions.push(x, y, z);
-            // Assign colors arbitrarily or based on position
-            colors.push(Math.abs(x), Math.abs(y), Math.abs(z));
+            // Assign colors
+            const r = colorsSphere[colorOffset];
+            const g = colorsSphere[colorOffset + 1];
+            const b = colorsSphere[colorOffset + 2];
+            colors.push(r, g, b);
         }
     }
 
-    for (let lat = 0; lat < rings; ++lat) {
-        for (let lon = 0; lon < segments; ++lon) {
-            const first = lat * (segments + 1) + lon;
+    for (let latitude = 0; latitude < rings; ++latitude) {
+        for (let longitude = 0; longitude < segments; ++longitude) {
+            const first = latitude * (segments + 1) + longitude;
             const second = first + segments + 1;
             indices.push(first, second, first + 1);
             indices.push(second, second + 1, first + 1);
@@ -84,6 +113,10 @@ function createTorus(outerRadius = 1, innerRadius = 0.3, segments = 30, rings = 
         const cosPhi = Math.cos(phi);
         const sinPhi = Math.sin(phi);
 
+        // Map latitude to an index in colorsTorus
+        const colorIndex = Math.floor((ring / rings) * (colorsTorus.length / 3 - 0.1));
+        const colorOffset = colorIndex * 3;
+
         for (let seg = 0; seg <= segments; ++seg) {
             const theta = seg * 2 * Math.PI / segments;
             const cosTheta = Math.cos(theta);
@@ -94,8 +127,11 @@ function createTorus(outerRadius = 1, innerRadius = 0.3, segments = 30, rings = 
             const z = (outerRadius + innerRadius * cosTheta) * sinPhi;
 
             positions.push(x, y, z);
-            // Assign colors arbitrarily
-            colors.push(Math.abs(x), Math.abs(y), Math.abs(z));
+            // Assign colors
+            const r = colorsTorus[colorOffset];
+            const g = colorsTorus[colorOffset + 1];
+            const b = colorsTorus[colorOffset + 2];
+            colors.push(r, g, b);
         }
     }
 
