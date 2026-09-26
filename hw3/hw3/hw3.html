@@ -45,6 +45,16 @@ Press F12 to see the console for debugging.</p>
       </div>
     </div>
     <div>
+      <div style="margin-top: 20px;">
+        <label for="translateX">Translate X:</label>
+        <input type="range" id="translateX" min="-2" max="2" step="0.01" value="0">
+        <br>
+        <label for="translateY">Translate Y:</label>
+        <input type="range" id="translateY" min="-2" max="2" step="0.01" value="0">
+        <br>
+        <label for="scale">Scale:</label>
+        <input type="range" id="scale" min="0.1" max="10" step="0.01" value="1">
+      </div>
       <div>
         <canvas id="glcanvas" width="400" height="400"></canvas>
       </div>
@@ -125,10 +135,6 @@ void main() {
 
     let program, posLoc, colorLoc, timeLoc, uMVM, uPM, uMTM;
     let vbo, nbo, ibo, vboSphere, nboSphere, iboSphere, vboTorus, nboTorus, iboTorus;
-    
-    // Generate primitives
-    // const sphereMesh = createSphere(1, 20, 20);
-    // const torusMesh = createTorus(1, 0.4, 30, 20);
 
     // Original Buffers: Now using Load Shapes
     function initBuffers() {
@@ -189,6 +195,25 @@ void main() {
         case 's': camZ -= step; break;
       }
     });
+
+    // Slider interactions
+    const translateXSlider = document.getElementById('translateX');
+    const translateYSlider = document.getElementById('translateY');
+    const scaleSlider = document.getElementById('scale');
+    
+    let translationX = parseFloat(translateXSlider.value);
+    let translationY = parseFloat(translateYSlider.value);
+    let scale = parseFloat(scaleSlider.value);
+
+    translateXSlider.oninput = () => {
+      translationX = parseFloat(translateXSlider.value);
+    };
+    translateYSlider.oninput = () => {
+      translationY = parseFloat(translateYSlider.value);
+    };
+    scaleSlider.oninput = () => {
+      scale = parseFloat(scaleSlider.value);
+    };
     
     // Object Selection
     let selectedPrimitive = 'cube';
@@ -277,6 +302,10 @@ void main() {
       let deltaTime = Date.now() - startTime;
       // object rotation
       modelTransformationMatrix = multiplyMat4(modelTransformationMatrix, cubeRotation);
+      // object scaling
+      modelTransformationMatrix = mat4Scale(modelTransformationMatrix, [scale, scale, scale]);
+      // object translation
+      modelTransformationMatrix = mat4Translate(modelTransformationMatrix, [translationX, translationY, 0]);
       // camera translation
       modelViewMatrix = mat4Translate(modelViewMatrix, [camX, camY, camZ]);
       
