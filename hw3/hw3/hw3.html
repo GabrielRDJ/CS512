@@ -45,8 +45,16 @@ Press F12 to see the console for debugging.</p>
       </div>
     </div>
     <div>
-      <canvas id="glcanvas" width="400" height="400"></canvas>
+      <div>
+        <canvas id="glcanvas" width="400" height="400"></canvas>
+      </div>
+      <div>
+        <button id="selCube">Select Cube</button>
+        <button id="selSphere">Select Sphere</button>
+        <button id="selTorus">Select Torus</button>
+      </div>
     </div>
+    
   </div>
 
   <!-- Vertex shader -->
@@ -116,10 +124,15 @@ void main() {
     fragEditor.value = document.getElementById("fragment-shader").textContent;
 
     let program, posLoc, colorLoc, timeLoc, uMVM, uPM, uMTM;
-    let vbo, nbo, ibo;
+    let vbo, nbo, ibo, vboSphere, nboSphere, iboSphere, vboTorus, nboTorus, iboTorus;
+    
+    // Generate primitives
+    const sphereMesh = createSphere(1, 20, 20);
+    const torusMesh = createTorus(1, 0.3, 30, 20);
 
-    // Buffers
+    // Original Buffers: Now using Load Shapes
     function initBuffers() {
+      // cube
       vbo = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
       gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
@@ -129,7 +142,8 @@ void main() {
       gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
 
       ibo = gl.createBuffer();
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
     }
     initBuffers();
 
@@ -175,7 +189,56 @@ void main() {
         case 's': camZ -= step; break;
       }
     });
+    
+    // Object Selection
+    let selectedPrimitive = 'cube';
+    const objectSelector = document.getElementById('objectSelector');
+    document.getElementById('selCube').addEventListener('click', () => {
+      selectedPrimitive = 'cube';
+      loadShape('cube');
+    });
+    document.getElementById('selSphere').addEventListener('click', () => {
+      selectedPrimitive = 'sphere';
+      loadShape('sphere');
+    });
+    document.getElementById('selTorus').addEventListener('click', () => {
+      selectedPrimitive = 'torus';
+      loadShape('torus');
+    });
 
+    // Store geometry data
+    const shapes = {
+      cube: { positions, colors, indices, name: "Cube" },
+      sphere: null,
+      torus: null
+    };
+
+    // Buffers for current shape
+    let shapeBuffers = {
+      vbo: null,
+      nbo: null,
+      ibo: null,
+      indexCount: 0
+    };
+    function loadShape(shapeName) {
+      const shape = shapes[shapeName];
+      if (!shape) return;
+
+      // Create buffers
+      shapeBuffers.vbo = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, shapeBuffers.vbo);
+      gl.bufferData(gl.ARRAY_BUFFER, shape.positions, gl.STATIC_DRAW);
+
+      shapeBuffers.nbo = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, shapeBuffers.nbo);
+      gl.bufferData(gl.ARRAY_BUFFER, shape.colors, gl.STATIC_DRAW);
+
+      shapeBuffers.ibo = gl.createBuffer();
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shapeBuffers.ibo);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, shape.indices, gl.STATIC_DRAW);
+
+      shapeBuffers.indexCount = shape.indices.length;
+    }
 
     // Projection setup
     let fov = Math.PI / 4, aspect = canvas.width / canvas.height, zNear = 0.1, zFar = 100;
@@ -186,9 +249,9 @@ void main() {
     let projPerspective = perspective(fov, aspect, zNear, zFar);
 
     let projOrtho = matMul(
-    box2Cube(-orthoSize * aspect, orthoSize * aspect, -orthoSize, orthoSize, zNear, zFar),
-    flipZ()
-);
+      box2Cube(-orthoSize * aspect, orthoSize * aspect, -orthoSize, orthoSize, zNear, zFar),
+      flipZ()
+    );
     let proj = projOrtho;
 
     let startTime = Date.now();
@@ -219,25 +282,44 @@ void main() {
       
       //set time in seconds
       gl.uniform1f(timeLoc, deltaTime/1000.0);
+
       gl.uniformMatrix4fv(uPM, false, proj);
       gl.uniformMatrix4fv(uMVM, false, modelViewMatrix);
       gl.uniformMatrix4fv(uMTM, false, modelTransformationMatrix);
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+      gl.bindBuffer(gl.ARRAY_BUFFER, shapeBuffers.vbo);
       gl.enableVertexAttribArray(posLoc);
       gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, nbo);
+      gl.bindBuffer(gl.ARRAY_BUFFER, shapeBuffers.nbo);
       gl.enableVertexAttribArray(colorLoc);
       gl.vertexAttribPointer(colorLoc, 3, gl.FLOAT, false, 0, 0);
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shapeBuffers.ibo);
 
-      // draw the object by the index order
-      gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+
+      // Original Buffer initialization, New one is above
+      // gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+      // gl.enableVertexAttribArray(posLoc);
+      // gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
+
+      // gl.bindBuffer(gl.ARRAY_BUFFER, nbo);
+      // gl.enableVertexAttribArray(colorLoc);
+      // gl.vertexAttribPointer(colorLoc, 3, gl.FLOAT, false, 0, 0);
+      // gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
+
+      // // draw the object by the index order
+      gl.drawElements(gl.TRIANGLES, shapeBuffers.indexCount, gl.UNSIGNED_SHORT, 0);
+      // gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
     }
 
     // Initialize when page loads
     window.onload = function () {
+      // Generate additional shapes
+      shapes.sphere = createSphere(1, 30, 30);
+      shapes.torus = createTorus(1, 0.4, 30, 20);
+      // Load default shape
+      loadShape('cube');
+
       setInterval(render, 30);
     }
 

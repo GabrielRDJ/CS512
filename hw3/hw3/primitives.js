@@ -29,3 +29,89 @@ const indices = new Uint16Array([
   // Left
   0, 4, 7,   0, 7, 3,
 ]);
+
+// sphere
+function createSphere(radius = 1, segments = 20, rings = 20) {
+    const positions = [];
+    const colors = [];
+    const indices = [];
+
+    for (let lat = 0; lat <= rings; ++lat) {
+        const theta = lat * Math.PI / rings;
+        const sinTheta = Math.sin(theta);
+        const cosTheta = Math.cos(theta);
+
+        for (let lon = 0; lon <= segments; ++lon) {
+            const phi = lon * 2 * Math.PI / segments;
+            const sinPhi = Math.sin(phi);
+            const cosPhi = Math.cos(phi);
+
+            const x = radius * sinTheta * cosPhi;
+            const y = radius * cosTheta;
+            const z = radius * sinTheta * sinPhi;
+
+            positions.push(x, y, z);
+            // Assign colors arbitrarily or based on position
+            colors.push(Math.abs(x), Math.abs(y), Math.abs(z));
+        }
+    }
+
+    for (let lat = 0; lat < rings; ++lat) {
+        for (let lon = 0; lon < segments; ++lon) {
+            const first = lat * (segments + 1) + lon;
+            const second = first + segments + 1;
+            indices.push(first, second, first + 1);
+            indices.push(second, second + 1, first + 1);
+        }
+    }
+
+    return {
+        positions: new Float32Array(positions),
+        colors: new Float32Array(colors),
+        indices: new Uint16Array(indices),
+        vertexCount: indices.length
+    };
+}
+
+// torus
+function createTorus(outerRadius = 1, innerRadius = 0.3, segments = 30, rings = 20) {
+    const positions = [];
+    const colors = [];
+    const indices = [];
+
+    for (let ring = 0; ring <= rings; ++ring) {
+        const phi = ring * 2 * Math.PI / rings;
+        const cosPhi = Math.cos(phi);
+        const sinPhi = Math.sin(phi);
+
+        for (let seg = 0; seg <= segments; ++seg) {
+            const theta = seg * 2 * Math.PI / segments;
+            const cosTheta = Math.cos(theta);
+            const sinTheta = Math.sin(theta);
+
+            const x = (outerRadius + innerRadius * cosTheta) * cosPhi;
+            const y = innerRadius * sinTheta;
+            const z = (outerRadius + innerRadius * cosTheta) * sinPhi;
+
+            positions.push(x, y, z);
+            // Assign colors arbitrarily
+            colors.push(Math.abs(x), Math.abs(y), Math.abs(z));
+        }
+    }
+
+    for (let ring = 0; ring < rings; ++ring) {
+        for (let seg = 0; seg < segments; ++seg) {
+            const first = ring * (segments + 1) + seg;
+            const second = first + segments + 1;
+            indices.push(first, second, first + 1);
+            indices.push(second, second + 1, first + 1);
+        }
+    }
+
+    return {
+        positions: new Float32Array(positions),
+        colors: new Float32Array(colors),
+        indices: new Uint16Array(indices),
+        vertexCount: indices.length
+    };
+}
