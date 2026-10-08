@@ -1,39 +1,47 @@
 // cube
 const positions = new Float32Array([
-  -1, -1, -1,  // 0
-   1, -1, -1,  // 1
-   1,  1, -1,  // 2
-  -1,  1, -1,  // 3
-  -1, -1,  1,  // 4
-   1, -1,  1,  // 5
-   1,  1,  1,  // 6
-  -1,  1,  1   // 7
+    -1, -1, -1,  // 0
+     1, -1, -1,  // 1
+     1,  1, -1,  // 2
+    -1,  1, -1,  // 3
+    -1, -1,  1,  // 4
+     1, -1,  1,  // 5
+     1,  1,  1,  // 6
+    -1,  1,  1   // 7
 ]);
 
 const colors = new Float32Array([
-  1,0,0,
-  0,1,0,
-  0,0,1,
-  1,1,0,
-  1,0,1,
-  0,1,1,
-  1,1,0,
-  1,0,1
+    1,0,0,
+    0,1,0,
+    0,0,1,
+    1,1,0,
+    1,0,1,
+    0,1,1,
+    1,1,0,
+    1,0,1
 ]);
 
 const colorsSphere = new Float32Array([
-  1,0,0,
-  0,1,0,
-  0,0,1,
-  1,1,0,
-  1,0,1,
-  0,1,1
+    1,0,0,
+    0,1,0,
+    0,0,1,
+    1,1,0,
+    1,0,1,
+    0,1,1
 ]);
 
 const colorsTorus = new Float32Array([
-  0.5,0,0.5,
-  0,1,0,
-  0.5,0.5,1
+    0.5,  0,0.5,
+    0,    1,  0,
+    0.5,0.5,  1
+]);
+
+const muscleColor = new Float32Array([
+    0.922,0.834,0
+]);
+
+const poppingVeinColor = new Float32Array([
+    1,0.11,0
 ]);
 
 
@@ -138,6 +146,52 @@ function createTorus(outerRadius = 1, innerRadius = 0.3, segments = 30, rings = 
     for (let ring = 0; ring < rings; ++ring) {
         for (let seg = 0; seg < segments; ++seg) {
             const first = ring * (segments + 1) + seg;
+            const second = first + segments + 1;
+            indices.push(first, second, first + 1);
+            indices.push(second, second + 1, first + 1);
+        }
+    }
+
+    return {
+        positions: new Float32Array(positions),
+        colors: new Float32Array(colors),
+        indices: new Uint16Array(indices),
+        vertexCount: indices.length
+    };
+}
+
+// arm
+function createArmSegment(radius = 1, segments = 20, rings = 20) {
+    const positions = [];
+    const colors = [];
+    const indices = [];
+
+    for (let latitude = 0; latitude <= rings; ++latitude) {
+        const theta = latitude * Math.PI / rings;
+        const sinTheta = Math.sin(theta);
+        const cosTheta = Math.cos(theta);
+
+        for (let longitude = 0; longitude <= segments; ++longitude) {
+            const phi = longitude * 2 * Math.PI / segments;
+            const sinPhi = Math.sin(phi);
+            const cosPhi = Math.cos(phi);
+
+            const x = radius * sinTheta * cosPhi;
+            const y = (radius / 4) * cosTheta;
+            const z = (radius / 4) * sinTheta * sinPhi;
+
+            positions.push(x, y, z);
+            // Assign colors
+            const r = muscleColor[0];
+            const g = muscleColor[1];
+            const b = muscleColor[2];
+            colors.push(r, g, b);
+        }
+    }
+
+    for (let latitude = 0; latitude < rings; ++latitude) {
+        for (let longitude = 0; longitude < segments; ++longitude) {
+            const first = latitude * (segments + 1) + longitude;
             const second = first + segments + 1;
             indices.push(first, second, first + 1);
             indices.push(second, second + 1, first + 1);

@@ -234,8 +234,8 @@ void main() {
     // Store geometry data
     const shapes = {
       cube: { positions, colors, indices, name: "Cube" },
-      sphere: null,
-      torus: null
+      sphere: createSphere(1, 30, 30),
+      torus: createTorus(1, 0.4, 30, 20)
     };
 
     // Buffers for current shape
@@ -343,9 +343,6 @@ void main() {
 
     // Initialize when page loads
     window.onload = function () {
-      // Generate additional shapes
-      shapes.sphere = createSphere(1, 30, 30);
-      shapes.torus = createTorus(1, 0.4, 30, 20);
       // Load default shape
       loadShape('cube');
 
