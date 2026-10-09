@@ -221,29 +221,16 @@ void main() {
       cubeRotZ = parseFloat(rotateZSlider.value);
       rotZOutput.innerHTML = cubeRotZ;
     };
-    
-    // Object Selection
-    // let selectedPrimitive = 'cube';
-    // const objectSelector = document.getElementById('objectSelector');
-    // document.getElementById('selCube').addEventListener('click', () => {
-    //   selectedPrimitive = 'cube';
-    //   loadShape('cube');
-    // });
-    // document.getElementById('selSphere').addEventListener('click', () => {
-    //   selectedPrimitive = 'sphere';
-    //   loadShape('sphere');
-    // });
-    // document.getElementById('selTorus').addEventListener('click', () => {
-    //   selectedPrimitive = 'torus';
-    //   loadShape('torus');
-    // });
 
     // Store geometry data
     const shapes = {
     //   cube: { positions, colors, indices, vbo: null, nbo: null, ibo: null, indexCount: 0},
       base: createArmSegment(1, 30, 30),
       forearm: createArmSegment(0.75, 30, 30),
-      hand: createSphere(0.5, 30, 30, muscleColor)
+      hand: createSphere(0.5, 30, 30, [0.9, 0.85, 0.2]),
+      vessel1: createArmSegment(0.5, 30, 30, poppingVeinColor),
+      vessel2: createArmSegment(0.3, 30, 30, poppingVeinColor),
+      vessel3: createArmSegment(0.5, 30, 30, poppingVeinColor)
     };
     let shapeBuffers = {
       vbo: null,
@@ -318,13 +305,18 @@ void main() {
       let rotX = [1, 0, 0, 0, 0, cy, sy, 0, 0, -sy, cy, 0, 0, 0, 0, 1];
       let rotY = [cx, 0, -sx, 0, 0, 1, 0, 0, sx, 0, cx, 0, 0, 0, 0, 1];
       let rotZ = [cz, sz, 0, 0, -sz, cz, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
-      cubeRotation = multiplyMat4(rotY, rotX);
-    //   let cubeRotation = multiplyMat4(multiplyMat4(rotZ, rotY), rotX);
+      // cubeRotation = multiplyMat4(rotY, rotX);
+      let cubeRotation = multiplyMat4(multiplyMat4(rotZ, rotY), rotX);
 
       //delta time in ms
       let deltaTime = Date.now() - startTime;
       //set time in seconds
       gl.uniform1f(timeLoc, deltaTime/1000.0);
+
+      let oscillateS = 0.75 + (Math.sin(deltaTime/500)*0.25);
+      let oscillateC = 0.75 + (Math.cos(deltaTime/500)*0.25);
+      rotY = [oscillateC, 0, -oscillateS, 0, 0, 1, 0, 0, oscillateS, 0, oscillateC, 0, 0, 0, 0, 1];
+      cubeRotation = multiplyMat4(cubeRotation, rotY);
 
       for (const shapeKey in shapes) {
         const shape = shapes[shapeKey];
@@ -341,30 +333,52 @@ void main() {
         let modelViewMatrix = mat4Identity();
         // init model transformation matrix as identity matrix
         let modelTransformationMatrix = mat4Identity();
+        const bigFlex = (Math.sin(deltaTime/1000)/2) + 0.5;
         if(shapeKey === 'base') {
-            modelTransformationMatrix = mat4Translate(modelTransformationMatrix, [-1, -1, 0]);
-            modelTransformationMatrix = mat4Scale(modelTransformationMatrix, [0.875, 1, 1]);
-            let cz1 = Math.cos(0), sz1 = Math.sin(0);
-            let rotZ1 = [cz1, sz1, 0, 0, -sz1, cz1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
-            modelTransformationMatrix = multiplyMat4(modelTransformationMatrix, rotZ1);
+          modelTransformationMatrix = mat4Translate(modelTransformationMatrix, [-1+translationX, -1+translationY, 0]);
+          modelTransformationMatrix = mat4Scale(modelTransformationMatrix, [0.875*scale, 1*scale+bigFlex, 1*scale+bigFlex]);
+          const cz1 = Math.cos(0), sz1 = Math.sin(0);
+          const rotZ1 = [cz1, sz1, 0, 0, -sz1, cz1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+          modelTransformationMatrix = multiplyMat4(cubeRotation, multiplyMat4(modelTransformationMatrix, rotZ1));
         }
         if(shapeKey === 'forearm') {
-            modelTransformationMatrix = mat4Translate(modelTransformationMatrix, [0.5, -0.25, 0]);
-            modelTransformationMatrix = mat4Scale(modelTransformationMatrix, [1, 1.5, 1.5]);
-            let cz2 = Math.cos(1), sz2 = Math.sin(1);
-            let rotZ2 = [cz2, sz2, 0, 0, -sz2, cz2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
-            modelTransformationMatrix = multiplyMat4(modelTransformationMatrix, rotZ2);
+          modelTransformationMatrix = mat4Translate(modelTransformationMatrix, [0.5+translationX, -0.25+translationY, 0]);
+          modelTransformationMatrix = mat4Scale(modelTransformationMatrix, [1*scale+(bigFlex/2), 1*scale+(bigFlex/2), 1*scale+bigFlex]);
+          const cz2 = Math.cos(1), sz2 = Math.sin(1);
+          const rotZ2 = [cz2, sz2, 0, 0, -sz2, cz2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+          modelTransformationMatrix = multiplyMat4(cubeRotation, multiplyMat4(modelTransformationMatrix, rotZ2));
         }
         if(shapeKey === 'hand') {
-            modelTransformationMatrix = mat4Translate(modelTransformationMatrix, [1, 1, 0]);
+          modelTransformationMatrix = mat4Translate(modelTransformationMatrix, [1+translationX, 1+translationY, 0]);
+          modelTransformationMatrix = mat4Scale(modelTransformationMatrix, [scale, scale, scale]);
+          const cz3 = Math.cos(0), sz3 = Math.sin(0);
+          const rotZ3 = [cz3, sz3, 0, 0, -sz3, cz3, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+          modelTransformationMatrix = multiplyMat4(cubeRotation, multiplyMat4(modelTransformationMatrix, rotZ3));
         }
-        // object translation
-        modelTransformationMatrix = mat4Translate(modelTransformationMatrix, [translationX, translationY, 0]);
-        // object scaling
-        modelTransformationMatrix = mat4Scale(modelTransformationMatrix, [scale, scale, scale]);
-        // object rotation
-        modelTransformationMatrix = multiplyMat4(modelTransformationMatrix, cubeRotation);
-        // camera translation
+        if(shapeKey === 'vessel1') {
+          modelTransformationMatrix = mat4Translate(modelTransformationMatrix, [-1+translationX, -1.25+translationY, 0]);
+          modelTransformationMatrix = mat4Scale(modelTransformationMatrix, [0.875*scale, 0.25*scale+bigFlex, 0.75*scale+bigFlex*5]);
+          const cz4 = Math.cos(0), sz4 = Math.sin(0);
+          const rotZ4 = [cz4, sz4, 0, 0, -sz4, cz4, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+          modelTransformationMatrix = multiplyMat4(cubeRotation, multiplyMat4(modelTransformationMatrix, rotZ4));
+        }
+        if(shapeKey === 'vessel2') {
+          modelTransformationMatrix = mat4Translate(modelTransformationMatrix, [0.45+translationX, -0.4+translationY, 0]);
+          modelTransformationMatrix = mat4Scale(modelTransformationMatrix, [0.875*scale+(bigFlex/2), 0.4*scale+(bigFlex/2), 0.75*scale+bigFlex*6]);
+          const cz5 = Math.cos(1.5), sz5 = Math.sin(1.5);
+          const rotZ5 = [cz5, sz5, 0, 0, -sz5, cz5, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+          modelTransformationMatrix = multiplyMat4(cubeRotation, multiplyMat4(modelTransformationMatrix, rotZ5));
+        }
+        if(shapeKey === 'vessel3') {
+          modelTransformationMatrix = mat4Translate(modelTransformationMatrix, [-1+translationX, -1+translationY, 0]);
+          modelTransformationMatrix = mat4Scale(modelTransformationMatrix, [0.875*scale+bigFlex*3, 0.3*scale+bigFlex, 0.1*scale+bigFlex]);
+          const cz6 = Math.cos(2.0), sz6 = Math.sin(2.0);
+          const rotZ6 = [cz6, sz6, 0, 0, -sz6, cz6, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+          modelTransformationMatrix = multiplyMat4(cubeRotation, multiplyMat4(modelTransformationMatrix, rotZ6));
+        }
+        // modelTransformationMatrix = mat4Translate(modelTransformationMatrix, [translationX, translationY, 0]);
+        // modelTransformationMatrix = mat4Scale(modelTransformationMatrix, [scale, scale, scale]);
+        // modelTransformationMatrix = multiplyMat4(modelTransformationMatrix, cubeRotation);
         modelViewMatrix = mat4Translate(modelViewMatrix, [camX, camY, camZ]);
         gl.uniformMatrix4fv(uPM, false, proj);
         gl.uniformMatrix4fv(uMVM, false, modelViewMatrix);
