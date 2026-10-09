@@ -46,19 +46,19 @@ Press F12 to see the console for debugging.</p>
     </div>
     <div>
       <div>
-        <label for="translateX">Translate X:</label>
+        <label for="translateX">Translate X:  </label>
         <input type="range" id="translateX" min="-10" max="10" step="0.01" value="0">
         <output id="translateXOut"></output>
         <br>
-        <label for="translateY">Translate Y:</label>
+        <label for="translateY">Translate Y:  </label>
         <input type="range" id="translateY" min="-10" max="10" step="0.01" value="0">
         <output id="translateYOut"></output>
         <br>
-        <label for="scale">Scale:</label>
+        <label for="scale">Scale: </label>
         <input type="range" id="scale" min="0.1" max="3" step="0.01" value="1.5">
         <output id="scaleOut"></output>
         <br>
-        <label for="rotateZ">Rotate Z:</label>
+        <label for="rotateZ">Rotate Z:  </label>
         <input type="range" id="rotateZ" min="-360" max="360" step="0.01" value="0">
         <output id="rotateZOut"></output>
         <br>
@@ -66,11 +66,11 @@ Press F12 to see the console for debugging.</p>
       <div>
         <canvas id="glcanvas" width="500" height="500"></canvas>
       </div>
-      <div>
+      <!-- <div>
         <button id="selCube">Select Cube</button>
         <button id="selSphere">Select Sphere</button>
         <button id="selTorus">Select Torus</button>
-      </div>
+      </div> -->
     </div>
     
   </div>
@@ -223,43 +223,28 @@ void main() {
     };
     
     // Object Selection
-    let selectedPrimitive = 'cube';
-    const objectSelector = document.getElementById('objectSelector');
-    document.getElementById('selCube').addEventListener('click', () => {
-      selectedPrimitive = 'cube';
-      loadShape('cube');
-    });
-    document.getElementById('selSphere').addEventListener('click', () => {
-      selectedPrimitive = 'sphere';
-      loadShape('sphere');
-    });
-    document.getElementById('selTorus').addEventListener('click', () => {
-      selectedPrimitive = 'torus';
-      loadShape('torus');
-    });
+    // let selectedPrimitive = 'cube';
+    // const objectSelector = document.getElementById('objectSelector');
+    // document.getElementById('selCube').addEventListener('click', () => {
+    //   selectedPrimitive = 'cube';
+    //   loadShape('cube');
+    // });
+    // document.getElementById('selSphere').addEventListener('click', () => {
+    //   selectedPrimitive = 'sphere';
+    //   loadShape('sphere');
+    // });
+    // document.getElementById('selTorus').addEventListener('click', () => {
+    //   selectedPrimitive = 'torus';
+    //   loadShape('torus');
+    // });
 
     // Store geometry data
     const shapes = {
-      cube: { positions, colors, indices, name: "Cube" },
-      sphere: createArmSegment(1, 30, 30),
-      torus: createArmSegment(0.5, 30, 30)
+    //   cube: { positions, colors, indices, vbo: null, nbo: null, ibo: null, indexCount: 0},
+      base: createArmSegment(1, 30, 30),
+      forearm: createArmSegment(0.75, 30, 30),
+      hand: createSphere(0.5, 30, 30, muscleColor)
     };
-
-
-
-
-// https://twgljs.org/
-// https://webgl2fundamentals.org/webgl/lessons/webgl-drawing-multiple-things.html
-// https://webgl2fundamentals.org/webgl/lessons/webgl-2d-matrices.html
-
-
-
-
-
-
-
-
-    // Buffers for current shape
     let shapeBuffers = {
       vbo: null,
       nbo: null,
@@ -284,6 +269,25 @@ void main() {
       gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, shape.indices, gl.STATIC_DRAW);
 
       shapeBuffers.indexCount = shape.indices.length;
+    }
+    function loadOneShape(shape) {
+      // Create buffers
+      shape.vbo = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, shape.vbo);
+      gl.bufferData(gl.ARRAY_BUFFER, shape.positions, gl.STATIC_DRAW);
+
+      shape.nbo = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, shape.nbo);
+      gl.bufferData(gl.ARRAY_BUFFER, shape.colors, gl.STATIC_DRAW);
+
+      shape.ibo = gl.createBuffer();
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.ibo);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, shape.indices, gl.STATIC_DRAW);
+
+      shape.indexCount = shape.indices.length;
+    }
+    for(const key in shapes) {
+        loadOneShape(shapes[key]);
     }
 
     // Projection setup
@@ -314,49 +318,64 @@ void main() {
       let rotX = [1, 0, 0, 0, 0, cy, sy, 0, 0, -sy, cy, 0, 0, 0, 0, 1];
       let rotY = [cx, 0, -sx, 0, 0, 1, 0, 0, sx, 0, cx, 0, 0, 0, 0, 1];
       let rotZ = [cz, sz, 0, 0, -sz, cz, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
-      let cubeRotation = multiplyMat4(multiplyMat4(rotY, rotX), rotZ);
-
-      // init model-view matrix as identity matrix
-      let modelViewMatrix = mat4Identity();
-      // init model transformation matrix as identity matrix
-      let modelTransformationMatrix = mat4Identity();
+      cubeRotation = multiplyMat4(rotY, rotX);
+    //   let cubeRotation = multiplyMat4(multiplyMat4(rotZ, rotY), rotX);
 
       //delta time in ms
       let deltaTime = Date.now() - startTime;
-      // object translation
-      modelTransformationMatrix = mat4Translate(modelTransformationMatrix, [translationX, translationY, 0]);
-      // object scaling
-      modelTransformationMatrix = mat4Scale(modelTransformationMatrix, [scale, scale, scale]);
-      // object rotation
-      modelTransformationMatrix = multiplyMat4(modelTransformationMatrix, cubeRotation);
-      // camera translation
-      modelViewMatrix = mat4Translate(modelViewMatrix, [camX, camY, camZ]);
-      
       //set time in seconds
       gl.uniform1f(timeLoc, deltaTime/1000.0);
 
-      gl.uniformMatrix4fv(uPM, false, proj);
-      gl.uniformMatrix4fv(uMVM, false, modelViewMatrix);
-      gl.uniformMatrix4fv(uMTM, false, modelTransformationMatrix);
+      for (const shapeKey in shapes) {
+        const shape = shapes[shapeKey];
+        gl.bindBuffer(gl.ARRAY_BUFFER, shape.vbo);
+        gl.enableVertexAttribArray(posLoc);
+        gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, shapeBuffers.vbo);
-      gl.enableVertexAttribArray(posLoc);
-      gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
+        gl.bindBuffer(gl.ARRAY_BUFFER, shape.nbo);
+        gl.enableVertexAttribArray(colorLoc);
+        gl.vertexAttribPointer(colorLoc, 3, gl.FLOAT, false, 0, 0);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.ibo);
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, shapeBuffers.nbo);
-      gl.enableVertexAttribArray(colorLoc);
-      gl.vertexAttribPointer(colorLoc, 3, gl.FLOAT, false, 0, 0);
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shapeBuffers.ibo);
-      // // draw the object by the index order
-      gl.drawElements(gl.TRIANGLES, shapeBuffers.indexCount, gl.UNSIGNED_SHORT, 0);
-      // gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+        // init model-view matrix as identity matrix
+        let modelViewMatrix = mat4Identity();
+        // init model transformation matrix as identity matrix
+        let modelTransformationMatrix = mat4Identity();
+        if(shapeKey === 'base') {
+            modelTransformationMatrix = mat4Translate(modelTransformationMatrix, [-1, -1, 0]);
+            modelTransformationMatrix = mat4Scale(modelTransformationMatrix, [0.875, 1, 1]);
+            let cz1 = Math.cos(0), sz1 = Math.sin(0);
+            let rotZ1 = [cz1, sz1, 0, 0, -sz1, cz1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+            modelTransformationMatrix = multiplyMat4(modelTransformationMatrix, rotZ1);
+        }
+        if(shapeKey === 'forearm') {
+            modelTransformationMatrix = mat4Translate(modelTransformationMatrix, [0.5, -0.25, 0]);
+            modelTransformationMatrix = mat4Scale(modelTransformationMatrix, [1, 1.5, 1.5]);
+            let cz2 = Math.cos(1), sz2 = Math.sin(1);
+            let rotZ2 = [cz2, sz2, 0, 0, -sz2, cz2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+            modelTransformationMatrix = multiplyMat4(modelTransformationMatrix, rotZ2);
+        }
+        if(shapeKey === 'hand') {
+            modelTransformationMatrix = mat4Translate(modelTransformationMatrix, [1, 1, 0]);
+        }
+        // object translation
+        modelTransformationMatrix = mat4Translate(modelTransformationMatrix, [translationX, translationY, 0]);
+        // object scaling
+        modelTransformationMatrix = mat4Scale(modelTransformationMatrix, [scale, scale, scale]);
+        // object rotation
+        modelTransformationMatrix = multiplyMat4(modelTransformationMatrix, cubeRotation);
+        // camera translation
+        modelViewMatrix = mat4Translate(modelViewMatrix, [camX, camY, camZ]);
+        gl.uniformMatrix4fv(uPM, false, proj);
+        gl.uniformMatrix4fv(uMVM, false, modelViewMatrix);
+        gl.uniformMatrix4fv(uMTM, false, modelTransformationMatrix);
+        // // draw the object by the index order
+        gl.drawElements(gl.TRIANGLES, shape.indexCount, gl.UNSIGNED_SHORT, 0);
+      }
     }
 
     // Initialize when page loads
     window.onload = function () {
-      // Load default shape
-      loadShape('cube');
-
       setInterval(render, 30);
     }
 
