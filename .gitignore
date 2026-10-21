@@ -1,4 +1,4 @@
-.vscode
-.DS_Store
-.claude
+*.vscode
+*.DS_Store
+*.claude
 *.zip
