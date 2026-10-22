@@ -53,3 +53,41 @@ function createCylinder(segments) {
 
   return { positions: new Float32Array(pos), normals: new Float32Array(nrm), indices: new Uint16Array(idx) };
 }
+
+function createSphere(segments) {
+    const position = [], normal = [], indice = [];
+
+    for (let latitude = 0; latitude <= segments; latitude++) {
+        const theta = latitude * Math.PI / segments;
+        const sinTheta = Math.sin(theta);
+        const cosTheta = Math.cos(theta);
+
+        for (let longitude = 0; longitude <= segments; longitude++) {
+            const phi = longitude * 2 * Math.PI / segments;
+            const sinPhi = Math.sin(phi);
+            const cosPhi = Math.cos(phi);
+
+            const x = sinTheta * cosPhi;
+            const y = cosTheta;
+            const z = sinTheta * sinPhi;
+
+            position.push(x, y, z);
+            normal.push(x, y, z);
+        }
+    }
+
+    for (let latitude = 0; latitude < segments; latitude++) {
+        for (let longitude = 0; longitude < segments; longitude++) {
+            const first = latitude * (segments + 1) + longitude;
+            const second = first + segments + 1;
+            indice.push(first, second, first + 1);
+            indice.push(second, second + 1, first + 1);
+        }
+    }
+
+    return {
+        positions: new Float32Array(position),
+        normals: new Float32Array(normal),
+        indices: new Uint16Array(indice)
+    };
+}

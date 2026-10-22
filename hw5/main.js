@@ -117,6 +117,7 @@ function createMesh({ positions, normals, indices }) {
 
 const cubeMesh = createMesh(createCube());
 const cylinderMesh = createMesh(createCylinder(32));
+const sphereMesh = createMesh(createSphere(32));
 
 gl.enable(gl.DEPTH_TEST);
 gl.clearColor(0, 0, 0, 1);
@@ -174,6 +175,20 @@ const lowerArm = createNode(cylinderMesh, [1, 0.2, 0.2],
 const upperArm = createNode(cubeMesh, [0.2, 0.4, 1],
   multiply(translate(0, 0.5, 0), scale(0.2, 0.5, 0.2)));
 
+// Hand: scale the sphere then move it up by 0.3 so its bottom sits at the joint
+const hand = createNode(sphereMesh, [0.4, 0.6, 0],
+  multiply(translate(0, 0.3, 0), scale(0.6, 0.6, 0.3)));
+
+// Fingers: scale cylinders then move accordingly
+const thumb = createNode(cylinderMesh, [0.5, 0.2, 0.8],
+  multiply(translate(0, 0.2, 0), scale(0.15, 0.25, 0.15)));
+const leftFinger = createNode(cylinderMesh, [0.5, 0.2, 0.8],
+  multiply(translate(0, 0.3, 0), scale(0.1, 0.3, 0.1)));
+// const rightFinger = createNode(cylinderMesh, [0.5, 0.2, 0.8],
+//   multiply(translate(0, 0.3, 0), scale(0.2, 0.6, 0.2)));
+
+hand.children.push(thumb);
+upperArm.children.push(hand);
 lowerArm.children.push(upperArm);
 
 function drawNode(node, frame) {
@@ -216,6 +231,12 @@ function render(time) {
 
   // Upper arm (child)
   upperArm.joint = multiply(translate(0, 1.2, 0), rotateZ(Math.sin(1.5 * t)));
+
+  // Hand (child's child)
+  hand.joint = multiply(translate(0, 1.2, 0), rotateZ(Math.sin(1.0 * t)));
+
+  // Fingers (child's child's children)
+  thumb.joint = multiply(translate(0, 0.8, 0), rotateX(Math.sin(0.5 * t)));
 
   drawTree(lowerArm, view);
   requestAnimationFrame(render);
