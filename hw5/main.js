@@ -118,6 +118,7 @@ function createMesh({ positions, normals, indices }) {
 const cubeMesh = createMesh(createCube());
 const cylinderMesh = createMesh(createCylinder(32));
 const sphereMesh = createMesh(createSphere(32));
+const torusMesh = createMesh(createTorus(32));
 
 gl.enable(gl.DEPTH_TEST);
 gl.clearColor(0, 0, 0, 1);
@@ -180,10 +181,10 @@ const hand = createNode(sphereMesh, [0.4, 0.6, 0],
   multiply(translate(0, 0.3, 0), scale(0.6, 0.6, 0.3)));
 
 // Fingers: scale cylinders then move accordingly
-const thumb = createNode(cylinderMesh, [0.5, 0.2, 0.8],
-  multiply(translate(0, 0.2, 0), scale(0.15, 0.25, 0.15)));
-const leftFinger = createNode(cylinderMesh, [0.5, 0.2, 0.8],
-  multiply(translate(0, 0.3, 0), scale(0.1, 0.3, 0.1)));
+const thumb = createNode(torusMesh, [0.9, 0.5, 0.9],
+  multiply(translate(0, 0.2, 0), scale(0.5, 0.5, 0.5)));
+// const leftFinger = createNode(cylinderMesh, [0.5, 0.2, 0.8],
+//   multiply(translate(0, 0.3, 0), scale(0.1, 0.3, 0.1)));
 // const rightFinger = createNode(cylinderMesh, [0.5, 0.2, 0.8],
 //   multiply(translate(0, 0.3, 0), scale(0.2, 0.6, 0.2)));
 

@@ -68,8 +68,8 @@ function createSphere(segments) {
             const cosPhi = Math.cos(phi);
 
             const x = sinTheta * cosPhi;
-            const y = cosTheta;
-            const z = sinTheta * sinPhi;
+            const y = sinTheta * sinPhi;
+            const z = cosTheta;
 
             position.push(x, y, z);
             normal.push(x, y, z);
@@ -88,6 +88,44 @@ function createSphere(segments) {
     return {
         positions: new Float32Array(position),
         normals: new Float32Array(normal),
+        indices: new Uint16Array(indice)
+    };
+}
+
+function createTorus(segments, innerRadius = 0.25) {
+    const position = [], normal = [], indice = [];
+
+    for (let ring = 0; ring <= segments; ring++) {
+        const phi = ring * 2 * Math.PI / segments;
+        const cosPhi = Math.cos(phi);
+        const sinPhi = Math.sin(phi);
+
+        for (let seg = 0; seg <= segments; seg++) {
+            const theta = seg * 2 * Math.PI / segments;
+            const cosTheta = Math.cos(theta);
+            const sinTheta = Math.sin(theta);
+
+            const x = (1 + innerRadius * cosTheta) * cosPhi;
+            const y = (1 + innerRadius * cosTheta) * sinPhi;
+            const z = innerRadius * sinTheta;
+
+            position.push(x, y, z);
+            normal.push(x, y, z);
+        }
+    }
+
+    for (let ring = 0; ring < segments; ring++) {
+        for (let seg = 0; seg < segments; seg++) {
+            const first = ring * (segments + 1) + seg;
+            const second = first + segments + 1;
+            indice.push(first, second, first + 1);
+            indice.push(second, second + 1, first + 1);
+        }
+    }
+
+    return {
+        positions: new Float32Array(position),
+        colors: new Float32Array(normal),
         indices: new Uint16Array(indice)
     };
 }
