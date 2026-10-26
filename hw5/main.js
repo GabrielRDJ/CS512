@@ -23,7 +23,12 @@ in vec3 vPosition;
 in vec3 vNormal;
 
 uniform vec3 uLightPos;   // eye space
+uniform vec3 uLightPos2;
 uniform vec3 uColor;
+
+uniform vec3 uDiffuse;
+uniform vec3 uSPecular;
+uniform bool uFlatShade;
 
 out vec4 fragColor;
 
@@ -33,13 +38,15 @@ void main() {
   vec3 Ks = vec3(0.5);
   float shininess = 32.0;
 
-  vec3 N = normalize(vNormal);
+  vec3 N = uFlatShade ? vNormal : normalize(vNormal);
   vec3 L = normalize(uLightPos - vPosition);
+  vec3 L2 = normalize(uLightPos2 - vPosition);
   vec3 V = normalize(-vPosition);           // camera sits at the origin
   vec3 R = reflect(-L, N);
+  vec3 R2 = reflect(-L2, N);
 
-  float diff = max(dot(N, L), 0.0);
-  float spec = pow(max(dot(V, R), 0.0), shininess);
+  float diff = max(dot(N, L), 0.0) + max(dot(N, L2), 0.0);
+  float spec = pow(max(dot(V, R), 0.0), shininess) + pow(max(dot(V, R2), 0.0), shininess);
 
   fragColor = vec4(Ka + Kd * diff + Ks * spec, 1.0);
 }
@@ -77,7 +84,7 @@ const shaderError = document.getElementById("shaderError");
 vertEditor.value = VERTEX_SHADER;
 fragEditor.value = FRAGMENT_SHADER;
 
-let program, uModelView, uProjection, uLightPos, uColor;
+let program, uModelView, uProjection, uLightPos, uLightPos2, uColor, uDiffuse, uSpecular, uFlatShade;
 
 function updateProgram() {
   try {
@@ -88,7 +95,11 @@ function updateProgram() {
     uModelView = gl.getUniformLocation(program, "uModelView");
     uProjection = gl.getUniformLocation(program, "uProjection");
     uLightPos = gl.getUniformLocation(program, "uLightPos");
+    uLightPos2 = gl.getUniformLocation(program, "uLightPos2");
     uColor = gl.getUniformLocation(program, "uColor");
+    uDiffuse = gl.getUniformLocation(program, "uDiffuse");
+    uSpecular = gl.getUniformLocation(program, "uSpecular");
+    uFlatShade = gl.getUniformLocation(program, "uFlatShade");
     shaderError.textContent = "";
   } catch (e) {
     shaderError.textContent = e.message.replace(/\0/g, "");  // some drivers end the log with \0
@@ -118,7 +129,7 @@ function createMesh({ positions, normals, indices }) {
 const cubeMesh = createMesh(createCube());
 const cylinderMesh = createMesh(createCylinder(32));
 const sphereMesh = createMesh(createSphere(32));
-const torusMesh = createMesh(createTorus(32));
+const torusMesh = createMesh(createTorus(32, 0.2)); // Second argument is inner radius, preffered value range: (0, 1)
 
 gl.enable(gl.DEPTH_TEST);
 gl.clearColor(0, 0, 0, 1);
@@ -164,29 +175,41 @@ document.getElementById("slider").addEventListener("input", e => {
 document.getElementById("spinButton").addEventListener("click", () => spinning = !spinning);
 
 
-function createNode(mesh, color, shape) {
-  return { mesh, color, shape, joint: null, children: [] };
+function createNode(mesh, color, shape, diffuse, specular, flatShade = false) {
+  return { mesh, color, shape, diffuse, specular, flatShade, joint: null, children: [] };
 }
 
-// Lower arm: scale the cylinder then move it up by 0.6 so its bottom sits at the joint
-const lowerArm = createNode(cylinderMesh, [1, 0.2, 0.2],
-  multiply(translate(0, 0.6, 0), scale(0.3, 0.6, 0.3)));
+const lowerArm = createNode(sphereMesh, [1, 0.2, 0.2],
+  multiply(translate(0, 0, 0), scale(0.4, 0.4, 0.4)), [0.8,0.8,0.8], [0.5,0.5,0.5], false);
 
-// Upper arm: scale the cube then move it up by 0.5 so its bottom sits at the joint
-const upperArm = createNode(cubeMesh, [0.2, 0.4, 1],
-  multiply(translate(0, 0.5, 0), scale(0.2, 0.5, 0.2)));
+const upperArm = createNode(sphereMesh, [0.2, 0.4, 1],
+  multiply(translate(0.0, 0, 0), scale(0.15, 0.15, 0.15)), [0.8,0.8,0.8], [0.5,0.5,0.5], false);
 
-// Hand: scale the sphere then move it up by 0.3 so its bottom sits at the joint
 const hand = createNode(sphereMesh, [0.4, 0.6, 0],
-  multiply(translate(0, 0.3, 0), scale(0.6, 0.6, 0.3)));
+  multiply(translate(0.0, 0, 0), scale(0.05, 0.05, 0.05)), [0.8,0.8,0.8], [0.5,0.5,0.5], false);
 
-// Fingers: scale cylinders then move accordingly
 const thumb = createNode(torusMesh, [0.9, 0.5, 0.9],
-  multiply(translate(0, 0.2, 0), scale(0.5, 0.5, 0.5)));
+  multiply(multiply(translate(0, 0, 0), scale(0.15, 0.15, 0.15)), rotateX(Math.PI/3)), [0.8,0.8,0.8], [0.5,0.5,0.5], true);
 // const leftFinger = createNode(cylinderMesh, [0.5, 0.2, 0.8],
 //   multiply(translate(0, 0.3, 0), scale(0.1, 0.3, 0.1)));
 // const rightFinger = createNode(cylinderMesh, [0.5, 0.2, 0.8],
 //   multiply(translate(0, 0.3, 0), scale(0.2, 0.6, 0.2)));
+
+// // Lower arm: scale the cylinder then move it up by 0.6 so its bottom sits at the joint
+// const lowerArm = createNode(sphereMesh, [1, 0.2, 0.2],
+//   multiply(translate(0, 0, 0), scale(0.4, 0.4, 0.4)));
+
+// // Upper arm: scale the cube then move it up by 0.5 so its bottom sits at the joint
+// const upperArm = createNode(sphereMesh, [0.2, 0.4, 1],
+//   multiply(translate(0.0, 0, 0), scale(0.15, 0.15, 0.15)));
+
+// // Hand: scale the sphere then move it up by 0.3 so its bottom sits at the joint
+// const hand = createNode(sphereMesh, [0.4, 0.6, 0],
+//   multiply(translate(0.0, 0, 0), scale(0.05, 0.05, 0.05)));
+
+// // Fingers: scale cylinders then move accordingly
+// const thumb = createNode(torusMesh, [0.9, 0.5, 0.9],
+//   multiply(multiply(translate(0, 0, 0), scale(0.15, 0.15, 0.15)), rotateX(Math.PI/3)));
 
 hand.children.push(thumb);
 upperArm.children.push(hand);
@@ -196,6 +219,7 @@ function drawNode(node, frame) {
   gl.uniformMatrix4fv(uModelView, false, multiply(frame, node.shape));
   gl.uniform3fv(uColor, node.color);
   gl.bindVertexArray(node.mesh.vao);
+  gl.uniform1i(uFlatShade, node.flatShade);
   gl.drawElements(gl.TRIANGLES, node.mesh.count, gl.UNSIGNED_SHORT, 0);
 }
 
@@ -222,22 +246,24 @@ function render(time) {
   const view = translate(camX, camY, camZ);
   gl.uniformMatrix4fv(uProjection, false, projection);
   gl.uniform3fv(uLightPos, transformPoint(view, lightWorld));
+  gl.uniform3fv(uLightPos2, transformPoint(view, [0,0,0]));
 
   // Whole-model rotation
   const axisRotation = ROTATE[axisSelect.value](sliderAngle * Math.PI / 180 + spinAngle);
   const rotation = multiply(multiply(rotateY(dragRotY), rotateX(dragRotX)), axisRotation);
 
   // Lower arm (root)
-  lowerArm.joint = multiply(multiply(translate(0, -2, 0), rotation), rotateZ(0.5 * Math.sin(t)));
+  lowerArm.joint = multiply(multiply(translate(0, 0, 0), rotation), rotateY(t/10));
 
   // Upper arm (child)
-  upperArm.joint = multiply(translate(0, 1.2, 0), rotateZ(Math.sin(1.5 * t)));
+  upperArm.joint = multiply(translate(1.5, 0, 0), rotateY(t));
 
   // Hand (child's child)
-  hand.joint = multiply(translate(0, 1.2, 0), rotateZ(Math.sin(1.0 * t)));
+  hand.joint = multiply(translate(0.7, 0, 0), rotateY(t/5));
 
   // Fingers (child's child's children)
-  thumb.joint = multiply(translate(0, 0.8, 0), rotateX(Math.sin(0.5 * t)));
+  thumb.joint = multiply(multiply(translate(0.0, 0, 0), rotateY(Math.sin(0.5 * t))), rotateX(Math.sin(0.25 * t)));
+  // thumb.joint = multiply(translate(0.1, 0, 0), rotateX(Math.sin(0)));
 
   drawTree(lowerArm, view);
   requestAnimationFrame(render);

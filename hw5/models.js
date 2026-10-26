@@ -68,8 +68,8 @@ function createSphere(segments) {
             const cosPhi = Math.cos(phi);
 
             const x = sinTheta * cosPhi;
-            const y = sinTheta * sinPhi;
-            const z = cosTheta;
+            const y = cosTheta;
+            const z = sinTheta * sinPhi;
 
             position.push(x, y, z);
             normal.push(x, y, z);
@@ -106,11 +106,15 @@ function createTorus(segments, innerRadius = 0.25) {
             const sinTheta = Math.sin(theta);
 
             const x = (1 + innerRadius * cosTheta) * cosPhi;
-            const y = (1 + innerRadius * cosTheta) * sinPhi;
-            const z = innerRadius * sinTheta;
+            const y = innerRadius * sinTheta;
+            const z = (1 + innerRadius * cosTheta) * sinPhi;
+
+            const nx = cosTheta * cosPhi;
+            const ny = sinTheta;
+            const nz = cosTheta * sinPhi;
 
             position.push(x, y, z);
-            normal.push(x, y, z);
+            normal.push(nx, ny, nz);
         }
     }
 
