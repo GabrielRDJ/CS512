@@ -27,15 +27,15 @@ uniform vec3 uLightPos2;
 uniform vec3 uColor;
 
 uniform vec3 uDiffuse;
-uniform vec3 uSPecular;
+uniform vec3 uSpecular;
 uniform bool uFlatShade;
 
 out vec4 fragColor;
 
 void main() {
   vec3 Ka = 0.2 * uColor;
-  vec3 Kd = 0.8 * uColor;
-  vec3 Ks = vec3(0.5);
+  vec3 Kd = uDiffuse * uColor;
+  vec3 Ks = uSpecular;
   float shininess = 32.0;
 
   vec3 N = uFlatShade ? vNormal : normalize(vNormal);
@@ -179,21 +179,26 @@ function createNode(mesh, color, shape, diffuse, specular, flatShade = false) {
   return { mesh, color, shape, diffuse, specular, flatShade, joint: null, children: [] };
 }
 
-const lowerArm = createNode(sphereMesh, [1, 0.2, 0.2],
-  multiply(translate(0, 0, 0), scale(0.4, 0.4, 0.4)), [0.8,0.8,0.8], [0.5,0.5,0.5], false);
+const lowerArm = createNode(sphereMesh, [1, 0.9, 0.2],
+  multiply(translate(0, 0, 0), scale(0.4, 0.4, 0.4)), 1.0, 1.0, false);
 
 const upperArm = createNode(sphereMesh, [0.2, 0.4, 1],
-  multiply(translate(0.0, 0, 0), scale(0.15, 0.15, 0.15)), [0.8,0.8,0.8], [0.5,0.5,0.5], false);
+  multiply(translate(0.0, 0, 0), scale(0.15, 0.15, 0.15)), 0.2, 0.9, false);
 
 const hand = createNode(sphereMesh, [0.4, 0.6, 0],
-  multiply(translate(0.0, 0, 0), scale(0.05, 0.05, 0.05)), [0.8,0.8,0.8], [0.5,0.5,0.5], false);
+  multiply(translate(0.0, 0, 0), scale(0.05, 0.05, 0.05)), 0.8, 0.5, false);
 
-const thumb = createNode(torusMesh, [0.9, 0.5, 0.9],
-  multiply(multiply(translate(0, 0, 0), scale(0.15, 0.15, 0.15)), rotateX(Math.PI/3)), [0.8,0.8,0.8], [0.5,0.5,0.5], true);
-// const leftFinger = createNode(cylinderMesh, [0.5, 0.2, 0.8],
-//   multiply(translate(0, 0.3, 0), scale(0.1, 0.3, 0.1)));
-// const rightFinger = createNode(cylinderMesh, [0.5, 0.2, 0.8],
-//   multiply(translate(0, 0.3, 0), scale(0.2, 0.6, 0.2)));
+const thumb = createNode(torusMesh, [0.9, 0.2, 0.1],
+  multiply(multiply(translate(0, 0, 0), scale(0.15, 0.15, 0.1)), rotateX(Math.PI/2)), 0.8, 0.9, true);
+
+const leftFinger = createNode(sphereMesh, [0.6, 0.3, 0.31],
+  multiply(translate(0, 0, 0), scale(0.1, 0.1, 0.1)), 0.2, 0.9, true);
+
+const rightFinger = createNode(sphereMesh, [0.7, 0.0, 1.0],
+  multiply(translate(0, 0, 0), scale(0.2, 0.2, 0.2)), 0.1, 0.2, false);
+
+const ring = createNode(torusMesh, [0.0, 1.0, 0.7],
+  multiply(multiply(translate(0, 0, 0), scale(0.3, 0.3, 0.1)), rotateX(Math.PI/2)), 0.8, 0.9, true);
 
 // // Lower arm: scale the cylinder then move it up by 0.6 so its bottom sits at the joint
 // const lowerArm = createNode(sphereMesh, [1, 0.2, 0.2],
@@ -212,12 +217,15 @@ const thumb = createNode(torusMesh, [0.9, 0.5, 0.9],
 //   multiply(multiply(translate(0, 0, 0), scale(0.15, 0.15, 0.15)), rotateX(Math.PI/3)));
 
 hand.children.push(thumb);
-upperArm.children.push(hand);
-lowerArm.children.push(upperArm);
+rightFinger.children.push(ring);
+upperArm.children.push(hand, leftFinger);
+lowerArm.children.push(upperArm, rightFinger);
 
 function drawNode(node, frame) {
   gl.uniformMatrix4fv(uModelView, false, multiply(frame, node.shape));
   gl.uniform3fv(uColor, node.color);
+  gl.uniform3fv(uDiffuse, [node.diffuse, node.diffuse, node.diffuse]);
+  gl.uniform3fv(uSpecular, [node.specular, node.specular, node.specular]);
   gl.bindVertexArray(node.mesh.vao);
   gl.uniform1i(uFlatShade, node.flatShade);
   gl.drawElements(gl.TRIANGLES, node.mesh.count, gl.UNSIGNED_SHORT, 0);
@@ -258,12 +266,16 @@ function render(time) {
   // Upper arm (child)
   upperArm.joint = multiply(translate(1.5, 0, 0), rotateY(t));
 
+  rightFinger.joint = multiply(multiply(translate(-1.1, 0, 0), rotateY(t/5)), multiply(translate(0, Math.sin(t/10), 0),rotateX(Math.sin(2.0 * t))));
+
   // Hand (child's child)
   hand.joint = multiply(translate(0.7, 0, 0), rotateY(t/5));
+  
+  leftFinger.joint = multiply(translate(-0.4, 0, 0), rotateY(t/5));
 
   // Fingers (child's child's children)
-  thumb.joint = multiply(multiply(translate(0.0, 0, 0), rotateY(Math.sin(0.5 * t))), rotateX(Math.sin(0.25 * t)));
-  // thumb.joint = multiply(translate(0.1, 0, 0), rotateX(Math.sin(0)));
+  thumb.joint = multiply(multiply(translate(0.0, 0, 0), rotateY(Math.sin(0.25 * t))), rotateX(Math.sin(1.0 * t)));
+  ring.joint = multiply(translate(0, 0, 0), rotateY(Math.sin(t)));
 
   drawTree(lowerArm, view);
   requestAnimationFrame(render);
