@@ -141,6 +141,7 @@ let dragRotX = 0, dragRotY = -0.5;                    // mouse drag
 let camX = 0, camY = 0, camZ = -7;                    // arrow keys, w, s
 let sliderAngle = 0;                                  // degrees
 let lightXVal = 0, lightYVal = 0, lightZVal = 0;      // light coords
+let transXVal = 0, transYVal = 0, transZVal = 0;      // translate coords
 let spinning = false, spinAngle = 0;                  // Start/Stop button
 
 let mouseDown = false, lastX, lastY;
@@ -188,52 +189,86 @@ document.getElementById("lightZ").addEventListener("input", e => {
   document.getElementById("lightZValue").textContent = lightZVal;
 });
 
+document.getElementById("transX").addEventListener("input", e => {
+  transXVal = Number(e.target.value);
+  document.getElementById("transXValue").textContent = transXVal;
+});
+document.getElementById("transY").addEventListener("input", e => {
+  transYVal = Number(e.target.value);
+  document.getElementById("transYValue").textContent = transYVal;
+});
+document.getElementById("transZ").addEventListener("input", e => {
+  transZVal = Number(e.target.value);
+  document.getElementById("transZValue").textContent = transZVal;
+});
 
 function createNode(mesh, color, shape, diffuse, specular, flatShade = false) {
   return { mesh, color, shape, diffuse, specular, flatShade, joint: null, children: [] };
 }
 
-const lowerArm = createNode(sphereMesh, [1, 0.9, 0.2],
+const sun = createNode(sphereMesh, [1, 0.9, 0.2],
   multiply(translate(0, 0, 0), scale(0.4, 0.4, 0.4)), 1.0, 1.0, false);
 
-const upperArm = createNode(sphereMesh, [0.2, 0.4, 1],
+const planetWithMoons = createNode(sphereMesh, [0.2, 0.4, 1],
   multiply(translate(0.0, 0, 0), scale(0.15, 0.15, 0.15)), 0.2, 0.9, false);
 
-const hand = createNode(sphereMesh, [0.4, 0.6, 0],
+const moonWithRing = createNode(sphereMesh, [0.4, 0.6, 0],
   multiply(translate(0.0, 0, 0), scale(0.05, 0.05, 0.05)), 0.8, 0.5, false);
 
 const thumb = createNode(torusMesh, [0.9, 0.2, 0.1],
   multiply(multiply(translate(0, 0, 0), scale(0.15, 0.15, 0.1)), rotateX(Math.PI/2)), 0.8, 0.9, true);
 
-const leftFinger = createNode(sphereMesh, [0.6, 0.3, 0.31],
+const moon = createNode(sphereMesh, [0.6, 0.3, 0.31],
   multiply(translate(0, 0, 0), scale(0.1, 0.1, 0.1)), 0.2, 0.9, true);
 
-const rightFinger = createNode(sphereMesh, [0.7, 0.0, 1.0],
+const planetWithRing = createNode(sphereMesh, [0.7, 0.0, 1.0],
   multiply(translate(0, 0, 0), scale(0.2, 0.2, 0.2)), 0.1, 0.2, false);
 
 const ring = createNode(torusMesh, [0.0, 1.0, 0.7],
   multiply(multiply(translate(0, 0, 0), scale(0.3, 0.3, 0.1)), rotateX(Math.PI/2)), 0.8, 0.9, true);
 
+let currentNode = sun;
+document.getElementById("nodeSelect").addEventListener("change", e => {
+  switch(e.target.value) {
+    case 'Sun':
+      currentNode = sun;
+      break;
+    case 'PlanetWithMoons':
+      currentNode = planetWithMoons;
+      break;
+    case 'Moon':
+      currentNode = moon;
+      break;
+    case 'MoonWithRing':
+      currentNode = moonWithRing;
+      break;
+    case 'PlanetWithRing':
+      currentNode = planetWithRing;
+      break;
+  }
+});
+document.getElementById("flatButton").addEventListener("click", () => currentNode.flatShade = !currentNode.flatShade);
+
 // // Lower arm: scale the cylinder then move it up by 0.6 so its bottom sits at the joint
-// const lowerArm = createNode(sphereMesh, [1, 0.2, 0.2],
+// const sun = createNode(sphereMesh, [1, 0.2, 0.2],
 //   multiply(translate(0, 0, 0), scale(0.4, 0.4, 0.4)));
 
 // // Upper arm: scale the cube then move it up by 0.5 so its bottom sits at the joint
-// const upperArm = createNode(sphereMesh, [0.2, 0.4, 1],
+// const planetWithMoons = createNode(sphereMesh, [0.2, 0.4, 1],
 //   multiply(translate(0.0, 0, 0), scale(0.15, 0.15, 0.15)));
 
 // // Hand: scale the sphere then move it up by 0.3 so its bottom sits at the joint
-// const hand = createNode(sphereMesh, [0.4, 0.6, 0],
+// const moonWithRing = createNode(sphereMesh, [0.4, 0.6, 0],
 //   multiply(translate(0.0, 0, 0), scale(0.05, 0.05, 0.05)));
 
 // // Fingers: scale cylinders then move accordingly
 // const thumb = createNode(torusMesh, [0.9, 0.5, 0.9],
 //   multiply(multiply(translate(0, 0, 0), scale(0.15, 0.15, 0.15)), rotateX(Math.PI/3)));
 
-hand.children.push(thumb);
-rightFinger.children.push(ring);
-upperArm.children.push(hand, leftFinger);
-lowerArm.children.push(upperArm, rightFinger);
+moonWithRing.children.push(thumb);
+planetWithRing.children.push(ring);
+planetWithMoons.children.push(moonWithRing, moon);
+sun.children.push(planetWithMoons, planetWithRing);
 
 function drawNode(node, frame) {
   gl.uniformMatrix4fv(uModelView, false, multiply(frame, node.shape));
@@ -259,7 +294,7 @@ function drawTree(root, rootFrame) {
 // Render loop
 let lastTime = 0;
 function render(time) {
-  const t = time / 1000;
+  const t = time / 100;
   if (spinning) spinAngle += t - lastTime;
   lastTime = t;
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -275,23 +310,25 @@ function render(time) {
   const rotation = multiply(multiply(rotateY(dragRotY), rotateX(dragRotX)), axisRotation);
 
   // Lower arm (root)
-  lowerArm.joint = multiply(multiply(translate(0, 0, 0), rotation), rotateY(t/10));
+  sun.joint = multiply(multiply(translate(0, 0, 0), rotation), rotateY(t/10));
 
   // Upper arm (child)
-  upperArm.joint = multiply(translate(1.5, 0, 0), rotateY(t));
+  planetWithMoons.joint = multiply(translate(1.5, 0, 0), rotateY(t));
 
-  rightFinger.joint = multiply(multiply(translate(-1.1, 0, 0), rotateY(t/5)), multiply(translate(0, Math.sin(t/10), 0),rotateX(Math.sin(2.0 * t))));
+  planetWithRing.joint = multiply(multiply(translate(-1.1, 0, 0), rotateY(t/5)), multiply(translate(0, Math.sin(t/10), 0),rotateX(Math.sin(2.0 * t))));
 
   // Hand (child's child)
-  hand.joint = multiply(translate(0.7, 0, 0), rotateY(t/5));
+  moonWithRing.joint = multiply(translate(0.7, 0, 0), rotateY(t/5));
   
-  leftFinger.joint = multiply(translate(-0.4, 0, 0), rotateY(t/5));
+  moon.joint = multiply(translate(-0.4, 0, 0), rotateY(t/5));
 
   // Fingers (child's child's children)
   thumb.joint = multiply(multiply(translate(0.0, 0, 0), rotateY(Math.sin(0.25 * t))), rotateX(Math.sin(1.0 * t)));
   ring.joint = multiply(translate(0, 0, 0), rotateY(Math.sin(t)));
 
-  drawTree(lowerArm, view);
+  currentNode.joint = multiply(translate(transXVal*Math.sin(t/10), transYVal*Math.sin(t/10), transZVal*Math.sin(t/10)), currentNode.joint);
+
+  drawTree(sun, view);
   requestAnimationFrame(render);
 }
 requestAnimationFrame(render);

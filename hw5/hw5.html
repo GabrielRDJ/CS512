@@ -80,32 +80,29 @@
     <div>
       <div class="controls">
         <div class="control-row">
-          <label for="slider">Rotation Angle:</label>
-          <input type="range" id="slider" min="0" max="360" value="0">
-          <span id="sliderValue">0</span>
-        </div>
-        <div class="control-row">
-          <select id="axisSelect">
-            <option value="x">X Rotation</option>
-            <option value="y">Y Rotation</option>
-            <option value="z">Z Rotation</option>
+          <select id="nodeSelect">
+            <option value="Sun">Sun</option>
+            <option value="PlanetWithMoons">Planet with Moons</option>
+            <option value="Moon">Moon</option>
+            <option value="MoonWithRing">Moon with Ring</option>
+            <option value="PlanetWithRing">Planet with Ring</option>
           </select>
-          <button id="spinButton">Start/Stop Rotation</button>
+          <button id="flatButton">Set material shading to Flat/Smooth Shading</button>
         </div>
         <div class="control-row">
-          <label for="lightX">Light X Coordinate:</label>
-          <input type="range" id="lightX" min="-10" max="10" value="0">
-          <span id="lightXValue">0</span>
+          <label for="transX">Translate Object X Coordinate:</label>
+          <input type="range" id="transX" min="-10" max="10" value="0">
+          <span id="transXValue">0</span>
         </div>
         <div class="control-row">
-          <label for="lightY">Light Y Coordinate:</label>
-          <input type="range" id="lightY" min="-10" max="10" value="0">
-          <span id="lightYValue">0</span>
+          <label for="transY">Translate Object Y Coordinate:</label>
+          <input type="range" id="transY" min="-10" max="10" value="0">
+          <span id="transYValue">0</span>
         </div>
         <div class="control-row">
-          <label for="lightZ">Light Z Coordinate:</label>
-          <input type="range" id="lightZ" min="-10" max="10" value="0">
-          <span id="lightZValue">0</span>
+          <label for="transZ">Translate Object Z Coordinate:</label>
+          <input type="range" id="transZ" min="-10" max="10" value="0">
+          <span id="transZValue">0</span>
         </div>
       </div>
     </div>
