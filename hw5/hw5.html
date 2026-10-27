@@ -10,7 +10,7 @@
     .layout { display: flex; gap: 10px; align-items: flex-start; }
     .editors { display: flex; flex-direction: column; gap: 10px; }
     textarea {
-      background: #222;
+      background: #040522;
       color: #0f0;
       font: 14px monospace;
       width: 400px;
@@ -59,6 +59,53 @@
             <option value="z">Z Rotation</option>
           </select>
           <button id="spinButton">Start/Stop Rotation</button>
+        </div>
+        <div class="control-row">
+          <label for="lightX">Light X Coordinate:</label>
+          <input type="range" id="lightX" min="-10" max="10" value="0">
+          <span id="lightXValue">0</span>
+        </div>
+        <div class="control-row">
+          <label for="lightY">Light Y Coordinate:</label>
+          <input type="range" id="lightY" min="-10" max="10" value="0">
+          <span id="lightYValue">0</span>
+        </div>
+        <div class="control-row">
+          <label for="lightZ">Light Z Coordinate:</label>
+          <input type="range" id="lightZ" min="-10" max="10" value="0">
+          <span id="lightZValue">0</span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="controls">
+        <div class="control-row">
+          <label for="slider">Rotation Angle:</label>
+          <input type="range" id="slider" min="0" max="360" value="0">
+          <span id="sliderValue">0</span>
+        </div>
+        <div class="control-row">
+          <select id="axisSelect">
+            <option value="x">X Rotation</option>
+            <option value="y">Y Rotation</option>
+            <option value="z">Z Rotation</option>
+          </select>
+          <button id="spinButton">Start/Stop Rotation</button>
+        </div>
+        <div class="control-row">
+          <label for="lightX">Light X Coordinate:</label>
+          <input type="range" id="lightX" min="-10" max="10" value="0">
+          <span id="lightXValue">0</span>
+        </div>
+        <div class="control-row">
+          <label for="lightY">Light Y Coordinate:</label>
+          <input type="range" id="lightY" min="-10" max="10" value="0">
+          <span id="lightYValue">0</span>
+        </div>
+        <div class="control-row">
+          <label for="lightZ">Light Z Coordinate:</label>
+          <input type="range" id="lightZ" min="-10" max="10" value="0">
+          <span id="lightZValue">0</span>
         </div>
       </div>
     </div>

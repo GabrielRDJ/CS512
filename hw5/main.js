@@ -137,10 +137,11 @@ const projection = perspective(Math.PI / 4, canvas.width / canvas.height, 0.1, 1
 const lightWorld = [3, 4, 5];
 
 // nteractive controls
-let dragRotX = 0, dragRotY = -0.5;      // mouse drag
-let camX = 0, camY = 0, camZ = -7;      // arrow keys, w, s
-let sliderAngle = 0;                    // degrees
-let spinning = false, spinAngle = 0;    // Start/Stop button
+let dragRotX = 0, dragRotY = -0.5;                    // mouse drag
+let camX = 0, camY = 0, camZ = -7;                    // arrow keys, w, s
+let sliderAngle = 0;                                  // degrees
+let lightXVal = 0, lightYVal = 0, lightZVal = 0;      // light coords
+let spinning = false, spinAngle = 0;                  // Start/Stop button
 
 let mouseDown = false, lastX, lastY;
 canvas.addEventListener("mousedown", e => { mouseDown = true; lastX = e.clientX; lastY = e.clientY; });
@@ -173,6 +174,19 @@ document.getElementById("slider").addEventListener("input", e => {
   document.getElementById("sliderValue").textContent = sliderAngle;
 });
 document.getElementById("spinButton").addEventListener("click", () => spinning = !spinning);
+
+document.getElementById("lightX").addEventListener("input", e => {
+  lightXVal = Number(e.target.value);
+  document.getElementById("lightXValue").textContent = lightXVal;
+});
+document.getElementById("lightY").addEventListener("input", e => {
+  lightYVal = Number(e.target.value);
+  document.getElementById("lightYValue").textContent = lightYVal;
+});
+document.getElementById("lightZ").addEventListener("input", e => {
+  lightZVal = Number(e.target.value);
+  document.getElementById("lightZValue").textContent = lightZVal;
+});
 
 
 function createNode(mesh, color, shape, diffuse, specular, flatShade = false) {
@@ -254,7 +268,7 @@ function render(time) {
   const view = translate(camX, camY, camZ);
   gl.uniformMatrix4fv(uProjection, false, projection);
   gl.uniform3fv(uLightPos, transformPoint(view, lightWorld));
-  gl.uniform3fv(uLightPos2, transformPoint(view, [0,0,0]));
+  gl.uniform3fv(uLightPos2, transformPoint(view, [lightXVal, lightYVal, lightZVal]));
 
   // Whole-model rotation
   const axisRotation = ROTATE[axisSelect.value](sliderAngle * Math.PI / 180 + spinAngle);
