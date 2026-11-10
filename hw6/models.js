@@ -102,6 +102,7 @@ function createSphere(segments = 64) {
             const tanX = -sinPhi, tanY = 0, tanZ = cosPhi;
             tangents.push(tanX, tanY, tanZ);
 
+            // const u = 1 - (longitude/segments), v = 1 - (latitude/segments);
             const u = 1 - (longitude/segments), v = 1 - (latitude/segments);
             texCoords.push(u, v);
         }
@@ -169,7 +170,7 @@ function createTorus(segments = 64, innerRadius = 0.25) {
 
     return {
         positions: new Float32Array(positions),
-        colors: new Float32Array(normals),
+        normals: new Float32Array(normals),
         tangents: new Float32Array(tangents),
         texCoords: new Float32Array(texCoords),
         indices: new Uint16Array(indices)

@@ -129,7 +129,7 @@ function createTorus(segments, innerRadius = 0.25) {
 
     return {
         positions: new Float32Array(position),
-        colors: new Float32Array(normal),
+        normals: new Float32Array(normal),
         indices: new Uint16Array(indice)
     };
 }
