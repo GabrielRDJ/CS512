@@ -167,6 +167,7 @@ const cubeMesh = createMesh(createCube());
 const cylinderMesh = createMesh(createCylinder());
 const sphereMesh = createMesh(createSphere());
 const torusMesh = createMesh(createTorus());
+const coneMesh = createMesh(createCone());
 
 function loadTexture(url) {
   const texture = gl.createTexture();
@@ -184,16 +185,38 @@ function loadTexture(url) {
   image.src = url;
   return texture;
 }
+function loadVideoTexture(url) {
+  const texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([128, 128, 255, 255]));
+
+  const video = document.createElement('video');
+  video.src = url;
+  video.loop = true;
+  video.muted = true;
+  video.play();
+  video.onload = () => {
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);  // images start at the top row, texture coordinates at the bottom
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  }
+
+  return texture;
+}
 
 const brickTexture = loadTexture("brick.png");
 const normalTexture = loadTexture("texture2.jpg");
+const fireTexture = loadVideoTexture("fireGif.mp4");
 
 const BUMP_MAPPING = 0, NORMAL_MAPPING = 1;
 const objects = [
   { mesh: cubeMesh, texture: brickTexture, mapping: BUMP_MAPPING, offset: [-1.8, 0, 0] },
   { mesh: cylinderMesh, texture: normalTexture, mapping: NORMAL_MAPPING, offset: [1.8, 0, 0] },
   { mesh: sphereMesh, texture: normalTexture, mapping: NORMAL_MAPPING, offset: [0, -1.8, 0] },
-  { mesh: torusMesh, texture: brickTexture, mapping: BUMP_MAPPING, offset: [0, 1.8, 0] }
+  { mesh: torusMesh, texture: brickTexture, mapping: BUMP_MAPPING, offset: [0, 1.8, 0] },
+  { mesh: coneMesh, texture: brickTexture, mapping: BUMP_MAPPING, offset: [3.6, 1.8, 0] }
 ];
 
 gl.enable(gl.DEPTH_TEST);
@@ -256,7 +279,7 @@ function render(time) {
 
   gl.activeTexture(gl.TEXTURE0);
   for (const { mesh, texture, mapping, offset } of objects) {
-    gl.uniformMatrix4fv(uModelView, false, multiply(view, multiply(translate(...offset), rotation)));
+    gl.uniformMatrix4fv(uModelView, false, multiply(view, multiply(translate(...offset), multiply(scale(0.5,0.5,0.5), rotation))));
     gl.uniform1i(uMapping, mapping);
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.bindVertexArray(mesh.vao);

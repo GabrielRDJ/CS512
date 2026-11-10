@@ -102,7 +102,6 @@ function createSphere(segments = 64) {
             const tanX = -sinPhi, tanY = 0, tanZ = cosPhi;
             tangents.push(tanX, tanY, tanZ);
 
-            // const u = 1 - (longitude/segments), v = 1 - (latitude/segments);
             const u = 1 - (longitude/segments), v = 1 - (latitude/segments);
             texCoords.push(u, v);
         }
@@ -166,6 +165,76 @@ function createTorus(segments = 64, innerRadius = 0.25) {
             indices.push(first, second, first + 1);
             indices.push(second, second + 1, first + 1);
         }
+    }
+
+    return {
+        positions: new Float32Array(positions),
+        normals: new Float32Array(normals),
+        tangents: new Float32Array(tangents),
+        texCoords: new Float32Array(texCoords),
+        indices: new Uint16Array(indices)
+    };
+}
+
+function createCone(radius = 1, height = 2, segments = 64) {
+    const positions = [], normals = [], tangents = [], texCoords = [], indices = [];
+
+    // Cone's Slope
+    const slope = Math.sqrt(radius^2 + height^2);
+    const cosSlope = radius / slope, sinSlope = height / slope;
+    for (let latitude = 0; latitude <= segments; latitude++) {
+        const theta = latitude * 2 * Math.PI / segments;
+        const sinTheta = Math.sin(theta);
+        const cosTheta = Math.cos(theta);
+
+        const x = radius * cosTheta;
+        const y = -height/2;
+        const z = radius * sinTheta;
+
+        positions.push(x, y, z);
+        normals.push(sinSlope * cosTheta, cosSlope, sinSlope * sinTheta);
+
+        const tanX = -sinTheta, tanY = 0, tanZ = cosTheta;
+        tangents.push(tanX, tanY, tanZ);
+
+        const u = latitude/segments;
+        texCoords.push(u, 0);
+
+        positions.push(0, Math.abs(y), 0);
+        normals.push(sinSlope * cosTheta, cosSlope, sinSlope * sinTheta);
+        tangents.push(tanX, tanY, tanZ);
+        texCoords.push(u, 1);
+    }
+
+    for (let latitude = 0; latitude < segments; latitude++) {
+        const index = latitude * 2;
+        indices.push(index, index + 1, index + 2);
+        indices.push(index + 1, index + 3, index + 2);
+    }
+
+    // Cone's base
+    const baseIndex = positions.length / 3;
+    positions.push(0, -height/2, 0);
+    normals.push(0, -1, 0);
+    tangents.push(1, 0, 0);
+    texCoords.push(0.5, 0.5);
+
+    const baseEdgeIndex = positions.length / 3;
+    for (let latitude = 0; latitude <= segments; latitude++) {
+        const theta = latitude * 2 * Math.PI / segments;
+        const sinTheta = Math.sin(theta);
+        const cosTheta = Math.cos(theta);
+
+        const x = radius * cosTheta;
+        const y = -height/2;
+        const z = radius * sinTheta;
+        positions.push(x, y, z);
+        normals.push(0, -1, 0);
+        tangents.push(1, 0, 0);
+        texCoords.push(cosTheta * 0.5 + 0.5, sinTheta * 0.5 + 0.5);
+    }
+    for (let latitude = 0; latitude < segments; latitude++) {
+        indices.push(baseIndex, baseEdgeIndex + latitude + 1, baseEdgeIndex + latitude);
     }
 
     return {
