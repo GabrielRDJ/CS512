@@ -165,6 +165,8 @@ function createMesh({ positions, normals, tangents, texCoords, indices }) {
 
 const cubeMesh = createMesh(createCube());
 const cylinderMesh = createMesh(createCylinder());
+const sphereMesh = createMesh(createSphere());
+const torusMesh = createMesh(createTorus());
 
 function loadTexture(url) {
   const texture = gl.createTexture();
@@ -189,7 +191,9 @@ const normalTexture = loadTexture("texture2.jpg");
 const BUMP_MAPPING = 0, NORMAL_MAPPING = 1;
 const objects = [
   { mesh: cubeMesh, texture: brickTexture, mapping: BUMP_MAPPING, offset: [-1.8, 0, 0] },
-  { mesh: cylinderMesh, texture: normalTexture, mapping: NORMAL_MAPPING, offset: [1.8, 0, 0] }
+  { mesh: cylinderMesh, texture: normalTexture, mapping: NORMAL_MAPPING, offset: [1.8, 0, 0] },
+  { mesh: sphereMesh, texture: normalTexture, mapping: NORMAL_MAPPING, offset: [0, -1.8, 0] },
+  { mesh: torusMesh, texture: brickTexture, mapping: BUMP_MAPPING, offset: [0, 1.8, 0] }
 ];
 
 gl.enable(gl.DEPTH_TEST);

@@ -77,3 +77,101 @@ function createCylinder(segments = 64, uRepeat = 3) {
     indices: new Uint16Array(indices)
   };
 }
+
+
+function createSphere(segments = 64) {
+    const positions = [], normals = [], tangents = [], texCoords = [], indices = [];
+
+    for (let latitude = 0; latitude <= segments; latitude++) {
+        const theta = latitude * Math.PI / segments;
+        const sinTheta = Math.sin(theta);
+        const cosTheta = Math.cos(theta);
+
+        for (let longitude = 0; longitude <= segments; longitude++) {
+            const phi = longitude * 2 * Math.PI / segments;
+            const sinPhi = Math.sin(phi);
+            const cosPhi = Math.cos(phi);
+
+            const x = sinTheta * cosPhi;
+            const y = cosTheta;
+            const z = sinTheta * sinPhi;
+
+            positions.push(x, y, z);
+            normals.push(x, y, z);
+
+            const tanX = -sinPhi, tanY = 0, tanZ = cosPhi;
+            tangents.push(tanX, tanY, tanZ);
+
+            const u = 1 - (longitude/segments), v = 1 - (latitude/segments);
+            texCoords.push(u, v);
+        }
+    }
+
+    for (let latitude = 0; latitude < segments; latitude++) {
+        for (let longitude = 0; longitude < segments; longitude++) {
+            const first = latitude * (segments + 1) + longitude;
+            const second = first + segments + 1;
+            indices.push(first, second, first + 1);
+            indices.push(second, second + 1, first + 1);
+        }
+    }
+
+    return {
+        positions: new Float32Array(positions),
+        normals: new Float32Array(normals),
+        tangents: new Float32Array(tangents),
+        texCoords: new Float32Array(texCoords),
+        indices: new Uint16Array(indices)
+    };
+}
+
+function createTorus(segments = 64, innerRadius = 0.25) {
+    const positions = [], normals = [], tangents = [], texCoords = [], indices = [];
+
+    for (let ring = 0; ring <= segments; ring++) {
+        const phi = ring * 2 * Math.PI / segments;
+        const cosPhi = Math.cos(phi);
+        const sinPhi = Math.sin(phi);
+
+        for (let seg = 0; seg <= segments; seg++) {
+            const theta = seg * 2 * Math.PI / segments;
+            const cosTheta = Math.cos(theta);
+            const sinTheta = Math.sin(theta);
+
+            const x = (1 + innerRadius * cosTheta) * cosPhi;
+            const y = innerRadius * sinTheta;
+            const z = (1 + innerRadius * cosTheta) * sinPhi;
+
+            positions.push(x, y, z);
+            
+            const nx = cosTheta * cosPhi;
+            const ny = sinTheta;
+            const nz = cosTheta * sinPhi;
+
+            normals.push(nx, ny, nz);
+
+            const tanX = -sinPhi, tanY = 0, tanZ = cosPhi;
+            tangents.push(tanX, tanY, tanZ);
+
+            const u = ring/segments, v = seg/segments;
+            texCoords.push(u, v);
+        }
+    }
+
+    for (let ring = 0; ring < segments; ring++) {
+        for (let seg = 0; seg < segments; seg++) {
+            const first = ring * (segments + 1) + seg;
+            const second = first + segments + 1;
+            indices.push(first, second, first + 1);
+            indices.push(second, second + 1, first + 1);
+        }
+    }
+
+    return {
+        positions: new Float32Array(positions),
+        colors: new Float32Array(normals),
+        tangents: new Float32Array(tangents),
+        texCoords: new Float32Array(texCoords),
+        indices: new Uint16Array(indices)
+    };
+}
